@@ -1,0 +1,44 @@
+{
+  "name": "personal-finance-bot",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@headlessui/react": "^2.2.8",
+    "@mui/icons-material": "^7.3.2",
+    "@mui/material": "^7.3.2",
+    "axios": "^1.12.2",
+    "bcryptjs": "^3.0.2",
+    "chart.js": "^4.5.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.2",
+    "framer-motion": "^12.23.19",
+    "lucide-react": "^0.544.0",
+    "mongodb": "^6.20.0",
+    "mongoose": "^8.18.2",
+    "next": "^14.2.5",
+    "next-auth": "^4.24.11",
+    "pdfkit": "^0.17.2",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.3.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.63.0",
+    "react-hot-toast": "^2.6.0",
+    "recharts": "^3.2.1",
+    "xlsx": "^0.18.5",
+    "zod": "^3.25.76",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.10"
+  }
+}
