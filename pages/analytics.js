@@ -90,14 +90,8 @@ export default function AnalyticsPage() {
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
                 className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
               >
-                {Array.from({ length: 5 }, (_, i) => {
-                  const year = new Date().getFullYear() - 2 + i;
-                  return (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  );
-                })}
+                <option value={2024}>2024</option>
+                <option value={2025}>2025</option>
               </select>
             </div>
           </div>

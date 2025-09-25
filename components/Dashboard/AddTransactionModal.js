@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, TrendingUp, TrendingDown, Calendar, Tag, DollarSign } from 'lucide-react';
 
-export default function AddTransactionModal({ isOpen, onClose, type, onTransactionAdded }) {
+export default function AddTransactionModal({ isOpen, onClose, type, onTransactionAdded, selectedMonth, selectedYear }) {
   const [formData, setFormData] = useState({
-    type: type || 'expense',
+    type: 'expense',
     amount: '',
     category: '',
-    date: new Date().toISOString().split('T')[0],
-    note: '',
-    fixed: false
+    date: '',
+    note: ''
   });
 
   const [loading, setLoading] = useState(false);
@@ -48,62 +47,108 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
   // Atualizar o tipo quando a prop mudar
   useEffect(() => {
     if (isOpen) {
+      // Garantir que selectedMonth e selectedYear sejam números válidos
+      const month = typeof selectedMonth === 'number' ? selectedMonth : new Date().getMonth();
+      const year = typeof selectedYear === 'number' ? selectedYear : new Date().getFullYear();
+      
+      // Criar data padrão para o mês/ano selecionado
+      const defaultDate = new Date(year, month, new Date().getDate());
+      const dateString = defaultDate.toISOString().split('T')[0];
+      
+      console.log('Modal aberto - month:', month, 'year:', year, 'dateString:', dateString);
+      
       setFormData(prev => ({
         ...prev,
         type: type || 'expense',
         category: type === 'income' ? categories.income[0] : categories.expense[0],
         amount: '',
         note: '',
-        fixed: false
+        date: dateString
       }));
       setError('');
     }
-  }, [isOpen, type]);
+  }, [isOpen, type, selectedMonth, selectedYear]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Modal submit iniciado - formData:', formData);
+    console.log('Modal submit - selectedMonth:', selectedMonth, 'selectedYear:', selectedYear);
     setLoading(true);
     setError('');
 
-    if (!formData.amount || !formData.category || !formData.date) {
-      setError('Por favor, preencha todos os campos obrigatórios.');
+    // Validação mais robusta dos campos obrigatórios
+    if (!formData.amount || formData.amount.trim() === '') {
+      setError('Por favor, informe o valor.');
+      setLoading(false);
+      return;
+    }
+    
+    if (!formData.category || formData.category.trim() === '') {
+      setError('Por favor, selecione uma categoria.');
+      setLoading(false);
+      return;
+    }
+    
+    if (!formData.date || formData.date.trim() === '') {
+      setError('Por favor, informe a data.');
+      setLoading(false);
+      return;
+    }
+    
+    // Validar se a data é válida
+    const dateObj = new Date(formData.date);
+    if (isNaN(dateObj.getTime())) {
+      setError('Por favor, informe uma data válida.');
       setLoading(false);
       return;
     }
 
     const parsedAmount = parseFloat(formData.amount);
+    console.log('Valor parseado:', parsedAmount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      console.log('Valor inválido:', parsedAmount);
       setError('O valor deve ser um número positivo.');
       setLoading(false);
       return;
     }
 
     try {
+      const requestData = {
+        type: formData.type,
+        amount: parsedAmount,
+        category: formData.category,
+        date: formData.date,
+        note: formData.note,
+        isFixed: false
+      };
+      console.log('Enviando requisição para API:', requestData);
+      
       const response = await fetch('/api/transactions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          type: formData.type,
-          amount: parsedAmount,
-          category: formData.category,
-          date: formData.date,
-          note: formData.note,
-          isFixed: formData.fixed
-        }),
+        body: JSON.stringify(requestData),
       });
 
+      console.log('Resposta da API recebida:', response.status, response.ok);
+      
       if (!response.ok) {
         const data = await response.json();
+        console.log('Erro da API:', data);
         throw new Error(data.error || 'Erro ao adicionar transação.');
       }
 
+      const responseData = await response.json();
+      console.log('Dados da resposta:', responseData);
+      console.log('Transação adicionada com sucesso, chamando onTransactionAdded...');
       onTransactionAdded();
       onClose();
     } catch (error) {
-      setError(error.message);
+      console.error('Erro ao adicionar transação:', error);
+      setError(`Erro: ${error.message}`);
     } finally {
+      console.log('Finalizando submit do modal');
       setLoading(false);
     }
   };
@@ -116,6 +161,9 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
     }));
   };
 
+  // Debug: verificar se o modal está sendo renderizado
+  console.log('Modal render - isOpen:', isOpen, 'type:', type, 'selectedMonth:', selectedMonth, 'selectedYear:', selectedYear);
+  
   if (!isOpen) return null;
 
   return (
@@ -254,25 +302,6 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
                 />
               </div>
 
-              {/* Despesa Fixa - só para despesas */}
-              {formData.type === 'expense' && (
-                <div className="flex items-center space-x-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                  <input
-                    type="checkbox"
-                    name="fixed"
-                    id="fixed"
-                    checked={formData.fixed}
-                    onChange={handleInputChange}
-                    className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="fixed" className="text-sm text-slate-700 dark:text-slate-300">
-                    <span className="font-medium">Despesa Fixa</span>
-                    <span className="block text-xs text-slate-500 dark:text-slate-400">
-                      Repetir automaticamente todo mês
-                    </span>
-                  </label>
-                </div>
-              )}
 
               {/* Botões */}
               <div className="flex space-x-3 pt-4">

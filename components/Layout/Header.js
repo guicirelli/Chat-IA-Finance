@@ -3,6 +3,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from 'next/router';
 import { ChevronDown, Settings, Users, LogOut, Edit, User, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
 export default function Header() {
   const { data: session } = useSession();
@@ -40,11 +41,18 @@ export default function Header() {
     <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 fixed top-0 right-0 left-0 z-20">
       <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-4 lg:px-6">
             {/* Logo/Title */}
-            <div className="flex-1">
-          <h1 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Controle Financeiro
-          </h1>
-        </div>
+            <div className="flex-1 flex items-center space-x-3">
+              <Image
+                src="/images/robo-logo.png"
+                alt="Logo"
+                width={28}
+                height={28}
+                className="w-7 h-7 rounded-full"
+              />
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Controle Financeiro
+              </h1>
+            </div>
 
         {/* User Profile */}
         <div className="relative flex items-center space-x-4" ref={dropdownRef}>

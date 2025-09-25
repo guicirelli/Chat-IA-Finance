@@ -10,6 +10,7 @@ import {
   ArrowDownRight
 } from 'lucide-react';
 import ExpensesPieChart from '../components/Dashboard/ExpensesPieChart';
+import ExpensesColumnChart from '../components/Dashboard/ExpensesColumnChart';
 import AddTransactionModal from '../components/Dashboard/AddTransactionModal';
 import TransactionDetails from '../components/Dashboard/TransactionDetails';
 
@@ -24,6 +25,8 @@ export default function DashboardPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isCurrentMonth, setIsCurrentMonth] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
   const [expandedCards, setExpandedCards] = useState({
     income: false,
     expense: false
@@ -66,7 +69,7 @@ export default function DashboardPage() {
 
   const refreshData = async () => {
     try {
-      console.log('Buscando dados atualizados...');
+      console.log('Buscando dados atualizados para mês:', selectedMonth, 'ano:', selectedYear);
       const [summaryResponse, transactionsResponse] = await Promise.all([
         fetch(`/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}`),
         fetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}`)
@@ -89,8 +92,14 @@ export default function DashboardPage() {
     console.log('Transação adicionada, atualizando dados...');
     setHasUnsavedChanges(true);
     
-    // Aguardar um pouco para garantir que a transação foi salva
-    setTimeout(refreshData, 500);
+    // Refresh imediato e depois novamente para garantir
+    refreshData();
+    
+    // Aguardar um pouco e fazer refresh novamente para garantir que a transação foi salva
+    setTimeout(() => {
+      console.log('Executando refreshData novamente...');
+      refreshData();
+    }, 1000);
   };
 
   const handleTransactionDeleted = () => {
@@ -104,10 +113,12 @@ export default function DashboardPage() {
   const handleSave = () => {
     setHasUnsavedChanges(false);
     setIsEditMode(false);
+    setIsEditing(false);
     // Aqui você pode adicionar lógica adicional de salvamento se necessário
   };
 
   const openModal = (type) => {
+    console.log('Abrindo modal para:', type, 'mês:', selectedMonth, 'ano:', selectedYear);
     setModalType(type);
     setIsModalOpen(true);
   };
@@ -151,8 +162,19 @@ export default function DashboardPage() {
                   <div className="flex items-center space-x-2">
                     <select
                       value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium"
+                      onChange={(e) => {
+                        if (isEditing) {
+                          alert('Salve as alterações antes de mudar o mês.');
+                          return;
+                        }
+                        setSelectedMonth(Number(e.target.value));
+                      }}
+                      disabled={isEditing}
+                      className={`px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium ${
+                        isEditing 
+                          ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-50' 
+                          : 'bg-white dark:bg-slate-800'
+                      }`}
                     >
                       {Array.from({ length: 12 }, (_, i) => (
                         <option key={i} value={i}>
@@ -165,17 +187,22 @@ export default function DashboardPage() {
                   <div className="flex items-center space-x-2">
                     <select
                       value={selectedYear}
-                      onChange={(e) => setSelectedYear(Number(e.target.value))}
-                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium"
+                      onChange={(e) => {
+                        if (isEditing) {
+                          alert('Salve as alterações antes de mudar o ano.');
+                          return;
+                        }
+                        setSelectedYear(Number(e.target.value));
+                      }}
+                      disabled={isEditing}
+                      className={`px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium ${
+                        isEditing 
+                          ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-50' 
+                          : 'bg-white dark:bg-slate-800'
+                      }`}
                     >
-                      {Array.from({ length: 10 }, (_, i) => {
-                        const year = new Date().getFullYear() - 5 + i;
-                        return (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        );
-                      })}
+                      <option value={2024}>2024</option>
+                      <option value={2025}>2025</option>
                     </select>
                   </div>
 
@@ -228,7 +255,10 @@ export default function DashboardPage() {
             {/* Botão Editar - só aparece quando não está editando */}
             {!isEditMode && (
               <button
-                onClick={() => setIsEditMode(true)}
+                onClick={() => {
+                  setIsEditMode(true);
+                  setIsEditing(true);
+                }}
                 className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,11 +336,13 @@ export default function DashboardPage() {
                     exit={{ opacity: 0, height: 0 }}
                     className="space-y-2 overflow-hidden"
                   >
-                    <TransactionDetails 
-                      transactions={transactions}
-                      type="income"
-                      onDelete={handleTransactionDeleted}
-                    />
+                <TransactionDetails
+                  transactions={transactions}
+                  type="income"
+                  onDelete={handleTransactionDeleted}
+                  isEditMode={isEditMode}
+                  onUpdated={refreshData}
+                />
                   </motion.div>
                 )}
           </motion.div>
@@ -361,17 +393,30 @@ export default function DashboardPage() {
                     exit={{ opacity: 0, height: 0 }}
                     className="space-y-2 overflow-hidden"
                   >
-                    <TransactionDetails 
-                      transactions={transactions}
-                      type="expense"
-                      onDelete={handleTransactionDeleted}
-                    />
+                <TransactionDetails
+                  transactions={transactions}
+                  type="expense"
+                  onDelete={handleTransactionDeleted}
+                  isEditMode={isEditMode}
+                  onUpdated={refreshData}
+                />
                   </motion.div>
                 )}
         </motion.div>
         </div>
         </div>
 
+        {/* Gráfico de Colunas - Despesas por Categoria */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700"
+        >
+          <div className="h-[400px]">
+            <ExpensesColumnChart data={summary} />
+          </div>
+        </motion.div>
 
         {/* Modal de Adicionar Transação */}
         <AddTransactionModal
@@ -379,6 +424,8 @@ export default function DashboardPage() {
           onClose={() => setIsModalOpen(false)}
           type={modalType}
           onTransactionAdded={handleTransactionAdded}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
         />
       </div>
     </MainLayout>

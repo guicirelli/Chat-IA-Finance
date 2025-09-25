@@ -1,10 +1,12 @@
-import { getAuth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../../lib/authOptions";
 import { connectToDatabase } from "../../../lib/db";
 import Transaction from "../../../models/Transaction";
 
 export default async function handler(req, res) {
-  const { userId } = getAuth(req);
-  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+  const session = await getServerSession(req, res, authOptions);
+  if (!session?.user?.id) return res.status(401).json({ error: "Unauthorized" });
+  const userId = session.user.id;
   await connectToDatabase();
 
   const items = await Transaction.find({ userId }).sort({ date: 1 });

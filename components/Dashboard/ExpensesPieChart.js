@@ -41,12 +41,12 @@ export default function ExpensesPieChart({ data }) {
       {
         data: [totalIncome, totalExpenses],
         backgroundColor: [
-          balance >= 0 ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)', // Verde se positivo, vermelho se negativo
-          balance >= 0 ? 'rgba(239, 68, 68, 0.9)' : 'rgba(34, 197, 94, 0.9)'  // Vermelho se positivo, verde se negativo
+          'rgba(34, 197, 94, 0.9)',   // Verde para receitas (sempre)
+          'rgba(239, 68, 68, 0.9)'    // Vermelho para despesas (sempre)
         ],
         borderColor: [
-          balance >= 0 ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)',
-          balance >= 0 ? 'rgba(239, 68, 68, 1)' : 'rgba(34, 197, 94, 1)'
+          'rgba(34, 197, 94, 1)',     // Verde para receitas (sempre)
+          'rgba(239, 68, 68, 1)'      // Vermelho para despesas (sempre)
         ],
         borderWidth: 2,
       },

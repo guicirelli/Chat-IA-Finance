@@ -5,9 +5,9 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: "Método não permitido" });
     }
 
-    // Inicializar array global se não existir
-    if (!global.tempTransactions) {
-      global.tempTransactions = [];
+    // Inicializar estrutura global separada por período se não existir
+    if (!global.tempTransactionsByPeriod) {
+      global.tempTransactionsByPeriod = {};
     }
 
     // ID temporário para teste
@@ -17,16 +17,18 @@ export default async function handler(req, res) {
     try {
       const { month = new Date().getMonth(), year = new Date().getFullYear() } = req.query;
 
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
-
-      // Buscar transações em memória
-      const transactions = global.tempTransactions.filter(t => 
+      // Criar chave única para o período (mês/ano)
+      const periodKey = `${year}-${month}`;
+      
+      // Buscar transações específicas do período
+      const transactions = (global.tempTransactionsByPeriod[periodKey] || []).filter(t => 
         t.userId === userId && 
-        t.profileId === activeProfile._id &&
-        new Date(t.date) >= startDate && 
-        new Date(t.date) <= endDate
+        t.profileId === activeProfile._id
       );
+
+      console.log(`Calculando resumo para período ${periodKey}:`, transactions.length, 'transações encontradas');
+      console.log('Períodos disponíveis:', Object.keys(global.tempTransactionsByPeriod));
+      console.log('Transações do período:', transactions);
 
       // Calcula totais
       const summary = {

@@ -1,4 +1,5 @@
-import { getAuth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../lib/authOptions";
 import { connectToDatabase } from "../../lib/db";
 import Transaction from "../../models/Transaction";
 import Goal from "../../models/Goal";
@@ -104,8 +105,9 @@ export default async function handler(req, res) {
 
   let dbContext = {};
   try {
-    const { userId } = getAuth(req);
-    if (userId) {
+    const session = await getServerSession(req, res, authOptions);
+    if (session?.user?.id) {
+      const userId = session.user.id;
       await connectToDatabase();
       const [tx, goals, reminders] = await Promise.all([
         Transaction.find({ userId }).sort({ date: -1 }).limit(200),

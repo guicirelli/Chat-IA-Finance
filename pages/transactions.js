@@ -168,14 +168,8 @@ export default function TransactionsPage() {
                 onChange={(e) => setFilters(prev => ({ ...prev, year: Number(e.target.value) }))}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-sm"
               >
-                {Array.from({ length: 5 }, (_, i) => {
-                  const year = new Date().getFullYear() - 2 + i;
-                  return (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  );
-                })}
+                <option value={2024}>2024</option>
+                <option value={2025}>2025</option>
               </select>
             </div>
 
@@ -358,6 +352,8 @@ export default function TransactionsPage() {
           onClose={() => setIsModalOpen(false)}
           type={modalType}
           onTransactionAdded={handleTransactionAdded}
+          selectedMonth={filters.month}
+          selectedYear={filters.year}
         />
       </div>
     </MainLayout>

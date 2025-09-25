@@ -106,14 +106,8 @@ export default function ExportPage() {
                     onChange={(e) => setFilters(prev => ({ ...prev, startYear: Number(e.target.value) }))}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-sm"
                   >
-                    {Array.from({ length: 5 }, (_, i) => {
-                      const year = new Date().getFullYear() - 2 + i;
-                      return (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      );
-                    })}
+                    <option value={2024}>2024</option>
+                    <option value={2025}>2025</option>
                   </select>
                 </div>
               </div>
@@ -150,14 +144,8 @@ export default function ExportPage() {
                     onChange={(e) => setFilters(prev => ({ ...prev, endYear: Number(e.target.value) }))}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-sm"
                   >
-                    {Array.from({ length: 5 }, (_, i) => {
-                      const year = new Date().getFullYear() - 2 + i;
-                      return (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      );
-                    })}
+                    <option value={2024}>2024</option>
+                    <option value={2025}>2025</option>
                   </select>
                 </div>
               </div>

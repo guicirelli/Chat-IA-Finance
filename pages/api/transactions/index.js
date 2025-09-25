@@ -1,9 +1,9 @@
 // API simplificada para teste - sem autenticação
 export default async function handler(req, res) {
   try {
-    // Inicializar array global se não existir
-    if (!global.tempTransactions) {
-      global.tempTransactions = [];
+    // Inicializar estrutura global separada por mês/ano se não existir
+    if (!global.tempTransactionsByPeriod) {
+      global.tempTransactionsByPeriod = {};
     }
 
     // ID temporário para teste
@@ -23,20 +23,17 @@ export default async function handler(req, res) {
             isFixed
           } = req.query;
 
-          let tempTransactions = global.tempTransactions.filter(t => 
+          // Criar chave única para o período (mês/ano)
+          const periodKey = `${year}-${month}`;
+          
+          // Buscar transações específicas do período
+          let tempTransactions = global.tempTransactionsByPeriod[periodKey] || [];
+          
+          // Filtrar apenas transações do usuário e perfil ativo
+          tempTransactions = tempTransactions.filter(t => 
             t.userId === userId && 
             t.profileId === activeProfile._id
           );
-
-          // Filtro por mês/ano
-          if (month && year) {
-            const startDate = new Date(year, month, 1);
-            const endDate = new Date(year, month + 1, 0);
-            tempTransactions = tempTransactions.filter(t => {
-              const transactionDate = new Date(t.date);
-              return transactionDate >= startDate && transactionDate <= endDate;
-            });
-          }
 
           // Filtros opcionais
           if (type) tempTransactions = tempTransactions.filter(t => t.type === type);
@@ -45,6 +42,8 @@ export default async function handler(req, res) {
 
           // Ordenar por data
           tempTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+          console.log(`Buscando transações para período ${periodKey}:`, tempTransactions.length, 'transações encontradas');
 
           return res.status(200).json(tempTransactions.slice(0, 100));
         } catch (error) {
@@ -68,6 +67,17 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Valor inválido" });
           }
 
+          // Determinar o período da transação baseado na data
+          const transactionDate = new Date(date);
+          const year = transactionDate.getFullYear();
+          const month = transactionDate.getMonth();
+          const periodKey = `${year}-${month}`;
+
+          // Inicializar array do período se não existir
+          if (!global.tempTransactionsByPeriod[periodKey]) {
+            global.tempTransactionsByPeriod[periodKey] = [];
+          }
+
           // Criar transação
           const transactionId = Date.now().toString();
           const transaction = {
@@ -77,40 +87,18 @@ export default async function handler(req, res) {
             type,
             category,
             amount: parsedAmount,
-            date: new Date(date),
+            date: transactionDate,
             note: note || '',
             isFixed: isFixed || false,
-            createdAt: new Date()
+            createdAt: new Date(),
+            periodKey // Adicionar chave do período para referência
           };
 
-          global.tempTransactions.push(transaction);
+          // Armazenar no período específico
+          global.tempTransactionsByPeriod[periodKey].push(transaction);
 
-          console.log('Transação criada:', transaction);
-
-          // Se for despesa fixa, criar as próximas 11 transações automáticas
-          if (isFixed && type === 'expense') {
-            const baseDate = new Date(date);
-
-            for (let i = 1; i <= 11; i++) {
-              const nextDate = new Date(baseDate);
-              nextDate.setMonth(baseDate.getMonth() + i);
-
-              global.tempTransactions.push({
-                _id: `${transactionId}-${i}`,
-                userId,
-                profileId: activeProfile._id,
-                type,
-                category,
-                amount: parsedAmount,
-                date: nextDate,
-                note: note || '',
-                isFixed: true,
-                isAutomated: true,
-                parentTransactionId: transactionId,
-                createdAt: new Date()
-              });
-            }
-          }
+          console.log(`Transação criada no período ${periodKey}:`, transaction);
+          console.log(`Total de transações no período ${periodKey}:`, global.tempTransactionsByPeriod[periodKey].length);
 
           return res.status(201).json(transaction);
         } catch (error) {
