@@ -1,26 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useSession, signIn } from 'next-auth/react';
+import { useUser, SignInButton, SignUpButton } from '@clerk/nextjs';
 import { useRouter } from 'next/router';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, TrendingUp, Shield, BarChart3, Target, CreditCard, AlertTriangle, FileText, CheckCircle, ArrowRight, Users, Clock, Zap, Phone } from 'lucide-react';
+import { TrendingUp, Shield, BarChart3, Target, CreditCard, FileText, CheckCircle, ArrowRight, Users, Clock, Zap } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function Landing() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-  const [loginType, setLoginType] = useState('email'); // 'email' ou 'phone'
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    phone: '',
-    loginField: '',
-    password: '',
-    confirmPassword: ''
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { data: session } = useSession();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
 
   // Hooks para animações de scroll
@@ -28,614 +15,271 @@ export default function Landing() {
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
 
   // Se já estiver logado, redireciona para o dashboard
-  if (session) {
+  useEffect(() => {
+    if (isLoaded && user) {
     router.push('/dashboard');
-    return null;
+    }
+  }, [isLoaded, user, router]);
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    setError('');
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    if (!isLogin) {
-      if (formData.password !== formData.confirmPassword) {
-        setError('As senhas não coincidem');
-        setLoading(false);
-        return;
-      }
-    }
-
-    try {
-      if (isLogin) {
-        // Para login, usar NextAuth diretamente
-        let loginField = formData.loginField;
-        
-        // Se for telefone, remover formatação para buscar no banco
-        if (loginType === 'phone') {
-          loginField = loginField.replace(/\D/g, '');
-          
-          // Validar se o telefone tem pelo menos 10 dígitos (DDD + número)
-          if (loginField.length < 10) {
-            setError('Telefone deve ter pelo menos 10 dígitos');
-            setLoading(false);
-            return;
-          }
-        }
-        
-        const result = await signIn('credentials', {
-          identifier: loginField,
-          password: formData.password,
-          redirect: false,
-          callbackUrl: '/dashboard'
-        });
-
-        if (result?.error) {
-          // Mapear erros específicos
-          if (result.error.includes('Usuário não encontrado')) {
-            const fieldName = loginType === 'phone' ? 'telefone' : 'email/username';
-            setError(`Usuário não encontrado. Verifique se o ${fieldName} está correto.`);
-          } else if (result.error.includes('Senha incorreta')) {
-            setError('Senha incorreta. Tente novamente.');
-          } else if (result.error.includes('Conta bloqueada')) {
-            setError('Conta bloqueada devido a muitas tentativas de login. Tente novamente em 2 horas.');
-          } else if (result.error.includes('Conta desativada')) {
-            setError('Conta desativada. Entre em contato com o suporte.');
-          } else {
-            setError('Erro de autenticação. Tente novamente.');
-          }
-        } else {
-          router.push('/dashboard');
-        }
-      } else {
-        // Para registro, usar a API de registro
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username: formData.username,
-            email: formData.email,
-            phone: formData.phone,
-            password: formData.password,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          // Tratar erros específicos do registro
-          if (data.field === 'email') {
-            setError(data.error);
-          } else if (data.field === 'username') {
-            setError(data.error);
-          } else if (data.field === 'password') {
-            setError(data.error);
-          } else if (data.field === 'required') {
-            setError(data.error);
-          } else if (data.field === 'server') {
-            setError(data.error);
-          } else {
-            setError('Erro ao criar conta. Tente novamente.');
-          }
-          return;
-        }
-
-        // Após registro bem-sucedido, redirecionar para login
-        setError('');
-        setIsLogin(true);
-        setLoginType('email');
-        setFormData({ username: '', email: '', phone: '', loginField: '', password: '', confirmPassword: '' });
-        
-        // Mostrar mensagem de sucesso
-        setTimeout(() => {
-          alert('Conta criada com sucesso! Agora você pode fazer login.');
-        }, 100);
-      }
-    } catch (error) {
-      // Tratar erros de rede ou outros erros técnicos
-      if (error.message.includes('fetch')) {
-        setError('Problema de conexão. Verifique sua internet e tente novamente.');
-      } else if (error.message.includes('JSON')) {
-        setError('Erro no servidor. Tente novamente em alguns instantes.');
-      } else {
-        setError('Erro inesperado. Tente novamente.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const features = [
-    {
-      icon: TrendingUp,
-      title: 'Controle Total',
-      description: 'Gerencie receitas e despesas com precisão absoluta'
-    },
-    {
-      icon: BarChart3,
-      title: 'Relatórios Inteligentes',
-      description: 'Gráficos e análises que facilitam suas decisões'
-    },
-    {
-      icon: Target,
-      title: 'Metas Financeiras',
-      description: 'Acompanhe objetivos e alcance sua independência'
-    },
-    {
-      icon: Shield,
-      title: 'Segurança Garantida',
-      description: 'Seus dados protegidos com tecnologia avançada'
-    }
-  ];
-
-  const benefits = [
-    {
-      icon: Clock,
-      title: 'Menos trabalho, mais tempo livre',
-      description: 'Seus lançamentos chegam prontos direto do seu banco.'
-    },
-    {
-      icon: FileText,
-      title: 'Seus gastos sob controle desde o primeiro dia',
-      description: 'Traga seu histórico de 90 dias e não comece do zero.'
-    },
-    {
-      icon: Users,
-      title: 'Conecte contas PF e PJ sem dor de cabeça',
-      description: 'Finanças pessoais e do negócio organizadas no mesmo lugar.'
-    },
-    {
-      icon: Shield,
-      title: 'Segurança em primeiro lugar',
-      description: 'Tecnologia do Banco Central para proteger seus dados e sua privacidade.'
-    }
-  ];
-
-  const controls = [
-    'Cadastre todos os seus gastos',
-    'Saiba o destino de cada centavo',
-    'Defina limites de gastos por categoria',
-    'Receba alertas de contas a pagar',
-    'Relatórios com gráficos completos'
-  ];
+  if (user) {
+    return null; // Redirecionando...
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
-      <div className="flex min-h-screen">
-        {/* Lado Esquerdo - Informações e Features */}
-        <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600"></div>
-          <div className="relative z-10 flex flex-col justify-center px-12 text-white">
+      {/* Header simples */}
+      <header className="relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Image
+                src="/images/robo-logo.png"
+                alt="Logo"
+                width={40}
+                height={40}
+                className="w-10 h-10 rounded-full"
+              />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Controle Financeiro
+                </h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <SignInButton mode="modal">
+                <button className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors">
+                  Entrar
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium">
+                  Criar Conta
+                </button>
+              </SignUpButton>
+              </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Seção Principal */}
+      <section className="relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Conteúdo da Esquerda */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
+              className="space-y-8"
             >
-              <h1 className="text-4xl font-bold mb-6 leading-tight">
-                Seu dinheiro sob controle,<br />
-                <span className="text-indigo-200">sem esforço</span>
-              </h1>
-              <p className="text-xl text-indigo-100 mb-8 leading-relaxed">
-                Tudo o que você precisa para organizar suas finanças sem perder tempo.
-              </p>
+              <div className="space-y-6">
+                <h2 className="text-5xl font-bold text-slate-900 dark:text-white leading-tight">
+                  Controle suas
+                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"> finanças</span>
+                  <br />
+                  com inteligência
+                </h2>
+                <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed">
+                  Gerencie suas receitas, despesas e metas financeiras de forma simples e eficiente. 
+                  Tome decisões mais inteligentes sobre seu dinheiro.
+                </p>
+              </div>
+
+              {/* Cards de Benefícios */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-6 border border-slate-200/50 dark:border-slate-700/50"
+                >
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Análise Inteligente</h3>
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    Relatórios detalhados e insights sobre seus gastos
+                  </p>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-6 border border-slate-200/50 dark:border-slate-700/50"
+                >
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-green-600" />
+                    </div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">100% Seguro</h3>
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    Seus dados protegidos com criptografia avançada
+                  </p>
+                </motion.div>
+              </div>
+
+              {/* CTA Principal */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="flex flex-col sm:flex-row gap-4"
+              >
+                <SignUpButton mode="modal">
+                  <button className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+                    <span>Começar Grátis</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                </SignUpButton>
+                <button className="px-8 py-4 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all duration-200 font-semibold">
+                  Ver Demonstração
+                </button>
+              </motion.div>
             </motion.div>
 
+            {/* Conteúdo da Direita - Formulário */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="space-y-6"
+              className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-8"
             >
-              {features.map((feature, index) => (
-                <div key={index} className="flex items-start space-x-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                    <feature.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg mb-1">{feature.title}</h3>
-                    <p className="text-indigo-100 text-sm leading-relaxed">{feature.description}</p>
-                  </div>
+              <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                  Comece sua jornada financeira
+                  </h3>
+                <p className="text-slate-600 dark:text-slate-300">
+                  Crie sua conta gratuitamente e tenha controle total
+                  </p>
                 </div>
-              ))}
-            </motion.div>
+                
+              <div className="space-y-6">
+                <SignUpButton mode="modal">
+                  <button className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold text-lg">
+                    Criar Conta Gratuita
+                  </button>
+                </SignUpButton>
 
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="mt-12 p-6 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20"
-            >
-              <div className="flex items-center space-x-4 mb-4">
-                <Image
-                  src="/images/robo-logo.png"
-                  alt="Robot Calculator"
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 rounded-full"
-                />
-                <div>
-                  <h4 className="font-bold text-lg">Controle Financeiro Inteligente</h4>
-                  <p className="text-indigo-100 text-sm">Mais de 500 mil pessoas confiam</p>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-300 dark:border-slate-600" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white dark:bg-slate-800 text-slate-500">ou</span>
+                    </div>
                 </div>
+
+                <SignInButton mode="modal">
+                  <button className="w-full py-4 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all duration-200 font-semibold">
+                    Já tenho uma conta
+                  </button>
+                </SignInButton>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span>Seguro e confiável</span>
+
+              {/* Card de Confiança */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="mt-8 bg-slate-50 dark:bg-slate-700/50 rounded-xl p-6"
+              >
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  </div>
+                  <h4 className="font-semibold text-slate-900 dark:text-white">Por que escolher?</h4>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span>Interface intuitiva</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span>Relatórios detalhados</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span>Suporte 24/7</span>
-                </div>
-              </div>
+                <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span>Grátis para sempre</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span>Interface intuitiva</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span>Relatórios detalhados</span>
+                  </li>
+                </ul>
+              </motion.div>
             </motion.div>
           </div>
         </div>
+      </section>
 
-        {/* Lado Direito - Formulário de Login/Registro */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center px-8">
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="w-full max-w-md"
-          >
-            {/* Logo e Título */}
-            <div className="text-center mb-8">
-              <div className="flex justify-center mb-6">
-                <Image
-                  src="/images/robo-logo.png"
-                  alt="Logo"
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 rounded-full shadow-lg"
-                />
-              </div>
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-                {isLogin ? 'Entrar na sua conta' : 'Criar conta gratuita'}
-              </h2>
-              <p className="text-slate-600 dark:text-slate-400">
-                {isLogin ? 'Acesse seu dashboard financeiro' : 'Comece a controlar suas finanças'}
-              </p>
-            </div>
-
-            {/* Formulário */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-slate-200 dark:border-slate-700"
-            >
-
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-6 flex items-center space-x-2"
-                >
-                  <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                  <span className="text-sm">{error}</span>
-                </motion.div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-
-                {isLogin ? (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {loginType === 'phone' ? 'Telefone (ex: 55 11 99999-9999)' : 'E-mail ou username'}
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLoginType(loginType === 'email' ? 'phone' : 'email');
-                          setFormData(prev => ({ ...prev, loginField: '' }));
-                        }}
-                        className="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors"
-                      >
-                        {loginType === 'phone' ? 'Username/Email' : 'Telefone'}
-                      </button>
-                    </div>
-                    <div className="relative">
-                      {loginType === 'phone' ? (
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                      ) : (
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                      )}
-                      <input
-                        type={loginType === 'phone' ? 'tel' : 'text'}
-                        name="loginField"
-                        value={formData.loginField || ''}
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          
-                          // Formatação de telefone brasileiro
-                          if (loginType === 'phone') {
-                            // Remove tudo que não é número
-                            value = value.replace(/\D/g, '');
-                            
-                            // Aplica máscara: 55 11 99999-9999
-                            if (value.length > 0) {
-                              if (value.length <= 2) {
-                                value = value;
-                              } else if (value.length <= 4) {
-                                value = `${value.slice(0, 2)} ${value.slice(2)}`;
-                              } else if (value.length <= 9) {
-                                value = `${value.slice(0, 2)} ${value.slice(2, 4)} ${value.slice(4)}`;
-                              } else {
-                                value = `${value.slice(0, 2)} ${value.slice(2, 4)} ${value.slice(4, 9)}-${value.slice(9, 13)}`;
-                              }
-                            }
-                          }
-                          
-                          setFormData(prev => ({
-                            ...prev,
-                            loginField: value
-                          }));
-                        }}
-                        className="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                        placeholder={loginType === 'phone' ? '55 11 99999-9999' : 'username ou email'}
-                        required
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Username
-                      </label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="text"
-                          name="username"
-                          value={formData.username}
-                          onChange={handleInputChange}
-                          className="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                          placeholder="Digite seu username"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        E-mail
-                      </label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          className="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                          placeholder="seu@email.com"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Telefone <span className="text-slate-400 text-sm">(opcional)</span>
-                      </label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="tel"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={(e) => {
-                            let value = e.target.value;
-                            // Remove tudo que não é número
-                            value = value.replace(/\D/g, '');
-                            
-                            // Aplica máscara: 55 11 99999-9999
-                            if (value.length > 0) {
-                              if (value.length <= 2) {
-                                value = value;
-                              } else if (value.length <= 4) {
-                                value = `${value.slice(0, 2)} ${value.slice(2)}`;
-                              } else if (value.length <= 9) {
-                                value = `${value.slice(0, 2)} ${value.slice(2, 4)} ${value.slice(4)}`;
-                              } else {
-                                value = `${value.slice(0, 2)} ${value.slice(2, 4)} ${value.slice(4, 9)}-${value.slice(9, 13)}`;
-                              }
-                            }
-                            
-                            setFormData(prev => ({
-                              ...prev,
-                              phone: value
-                            }));
-                          }}
-                          className="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                          placeholder="55 11 99999-9999"
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Senha
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className="w-full pl-10 pr-12 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                      placeholder="Digite sua senha"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {!isLogin && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Confirmar senha
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                        placeholder="Confirme sua senha"
-                        required={!isLogin}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2"
-                >
-                  {loading ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                  ) : (
-                    <span>{isLogin ? 'Entrar' : 'Criar conta'}</span>
-                  )}
-                </button>
-              </form>
-
-              <div className="mt-6 text-center space-y-4">
-                {isLogin && (
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        // Implementar modal de recuperação de senha
-                        alert('Funcionalidade de recuperação de senha será implementada em breve!');
-                      }}
-                      className="text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
-                    >
-                      Esqueci minha senha
-                    </button>
-                  </div>
-                )}
-                
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsLogin(!isLogin);
-                      setError('');
-                      setLoginType('email');
-                      setFormData({ username: '', email: '', phone: '', loginField: '', password: '', confirmPassword: '' });
-                    }}
-                    className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors"
-                  >
-                    {isLogin ? 'Não tem conta? Criar conta' : 'Já tem conta? Fazer login'}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Benefícios */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="mt-8 text-center"
-            >
-              <div className="grid grid-cols-2 gap-4 text-sm text-slate-600 dark:text-slate-400">
-                <div className="flex items-center justify-center space-x-2">
-                  <Shield className="w-4 h-4 text-green-500" />
-                  <span>100% Seguro</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2">
-                  <CreditCard className="w-4 h-4 text-green-500" />
-                  <span>Gratuito</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2">
-                  <FileText className="w-4 h-4 text-green-500" />
-                  <span>Relatórios</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2">
-                  <Target className="w-4 h-4 text-green-500" />
-                  <span>Metas</span>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <motion.section 
-        id="features" 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.8 }}
-        className="py-24 bg-white dark:bg-slate-800"
-      >
+      {/* Seção de Features */}
+      <section className="py-20 bg-white/50 dark:bg-slate-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-center mb-20"
+            className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Como o Controle Financeiro vai me ajudar?
+              Funcionalidades que fazem a diferença
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
-              Proporcionando meios para você realizar seus sonhos, metas e objetivos
+              Ferramentas poderosas para você ter controle total das suas finanças
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                icon: BarChart3,
+                title: "Análise Completa",
+                description: "Relatórios detalhados sobre seus gastos e receitas"
+              },
+              {
+                icon: Target,
+                title: "Metas Financeiras",
+                description: "Defina e acompanhe seus objetivos financeiros"
+              },
+              {
+                icon: CreditCard,
+                title: "Categorização",
+                description: "Organize automaticamente suas transações"
+              },
+              {
+                icon: FileText,
+                title: "Relatórios",
+                description: "Exporte seus dados em PDF e Excel"
+              },
+              {
+                icon: Users,
+                title: "Multi-perfis",
+                description: "Gerencie múltiplas contas familiares"
+              },
+              {
+                icon: Zap,
+                title: "Automação",
+                description: "Lembretes e transações automáticas"
+              }
+            ].map((feature, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 50 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="bg-slate-50 dark:bg-slate-700 rounded-2xl p-8 text-center hover:shadow-xl hover:scale-105 transition-all duration-300"
+                viewport={{ once: true }}
+                className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-6 border border-slate-200/50 dark:border-slate-700/50 hover:shadow-lg transition-all duration-300"
               >
-                <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <feature.icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center mb-4">
+                  <feature.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
                   {feature.title}
@@ -647,130 +291,128 @@ export default function Landing() {
             ))}
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* Benefits Section */}
-      <motion.section 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.8 }}
-        className="py-24 bg-slate-50 dark:bg-slate-900"
-      >
+      {/* Seção de Benefícios */}
+      <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-center mb-20"
-          >
-            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Por que escolher nosso sistema?
-            </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
-              Descubra os benefícios que fazem a diferença na sua vida financeira
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="bg-white dark:bg-slate-800 rounded-2xl p-8 text-center hover:shadow-xl hover:scale-105 transition-all duration-300 border border-slate-200 dark:border-slate-700"
-              >
-                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <benefit.icon className="w-8 h-8 text-green-600 dark:text-green-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                  {benefit.title}
-                </h3>
-                <p className="text-slate-600 dark:text-slate-300">
-                  {benefit.description}
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="space-y-8"
+            >
+              <div>
+                <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-6">
+                  Por que escolher nossa plataforma?
+                </h2>
+                <p className="text-xl text-slate-600 dark:text-slate-300 mb-8">
+                  Oferecemos as melhores ferramentas para você alcançar seus objetivos financeiros
                 </p>
-              </motion.div>
-            ))}
+              </div>
+
+              <div className="space-y-6">
+                {[
+                  {
+                    icon: Shield,
+                    title: "Segurança Total",
+                    description: "Seus dados protegidos com criptografia de nível bancário"
+                  },
+                  {
+                    icon: Clock,
+                    title: "Sincronização em Tempo Real",
+                    description: "Acesse suas informações de qualquer dispositivo"
+                  },
+                  {
+                    icon: Users,
+                    title: "Suporte Especializado",
+                    description: "Equipe pronta para ajudar você a qualquer momento"
+                  }
+                ].map((benefit, index) => (
+                <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: index * 0.2 }}
+                    viewport={{ once: true }}
+                    className="flex items-start space-x-4"
+                  >
+                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <benefit.icon className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                        {benefit.title}
+                      </h3>
+                      <p className="text-slate-600 dark:text-slate-300">
+                        {benefit.description}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-8 text-white">
+                <h3 className="text-2xl font-bold mb-4">Comece hoje mesmo!</h3>
+                <p className="text-blue-100 mb-6">
+                  Junte-se a milhares de usuários que já transformaram suas finanças
+                </p>
+                <SignUpButton mode="modal">
+                  <button className="w-full py-4 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-200 font-semibold text-lg">
+                    Criar Conta Grátis
+                  </button>
+                </SignUpButton>
+              </div>
+            </motion.div>
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* Stats Section */}
-      <motion.section 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.8 }}
-        className="py-24 bg-indigo-600 dark:bg-indigo-700"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Números que impressionam
-            </h2>
-            <p className="text-xl text-indigo-100 max-w-3xl mx-auto">
-              Confiança de milhares de usuários em todo o Brasil
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { number: "500K+", label: "Usuários ativos", icon: Users },
-              { number: "R$ 50M+", label: "Em transações", icon: TrendingUp },
-              { number: "99.9%", label: "Uptime garantido", icon: Shield },
-              { number: "24/7", label: "Suporte disponível", icon: Clock }
-            ].map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center"
-              >
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <stat.icon className="w-8 h-8 text-white" />
-                </div>
-                <div className="text-4xl font-bold text-white mb-2">{stat.number}</div>
-                <div className="text-indigo-100">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </motion.section>
-
-      {/* Footer */}
-      <motion.footer 
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-        className="bg-slate-900 text-white py-16"
-      >
+      {/* Seção de Estatísticas */}
+      <section className="py-20 bg-white/50 dark:bg-slate-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-center"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center"
           >
-            <motion.div 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex items-center justify-center space-x-3 mb-6"
-            >
+            <div className="space-y-4">
+              <div className="text-4xl font-bold text-blue-600">10K+</div>
+              <div className="text-lg font-semibold text-slate-900 dark:text-white">Usuários Ativos</div>
+              <div className="text-slate-600 dark:text-slate-300">Confiam na nossa plataforma</div>
+            </div>
+            <div className="space-y-4">
+              <div className="text-4xl font-bold text-green-600">R$ 2M+</div>
+              <div className="text-lg font-semibold text-slate-900 dark:text-white">Economizados</div>
+              <div className="text-slate-600 dark:text-slate-300">Pelos nossos usuários</div>
+            </div>
+            <div className="space-y-4">
+              <div className="text-4xl font-bold text-purple-600">4.9/5</div>
+              <div className="text-lg font-semibold text-slate-900 dark:text-white">Avaliação</div>
+              <div className="text-slate-600 dark:text-slate-300">Dos nossos usuários</div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
               <Image
                 src="/images/robo-logo.png"
                 alt="Logo"
@@ -779,63 +421,45 @@ export default function Landing() {
                 className="w-8 h-8 rounded-full"
               />
               <span className="text-xl font-bold">Controle Financeiro</span>
-            </motion.div>
-            <motion.p 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="text-slate-400 mb-4"
-            >
-              A melhor solução para uma vida financeira saudável
-            </motion.p>
-            <motion.div 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8"
-            >
-              <div>
-                <h4 className="font-semibold text-white mb-3">Recursos</h4>
-                <ul className="space-y-2 text-slate-400">
-                  <li>Dashboard Completo</li>
-                  <li>Relatórios Detalhados</li>
-                  <li>Metas Financeiras</li>
-                  <li>Alertas Inteligentes</li>
-                </ul>
               </div>
-              <div>
-                <h4 className="font-semibold text-white mb-3">Suporte</h4>
-                <ul className="space-y-2 text-slate-400">
-                  <li>Central de Ajuda</li>
-                  <li>Contato 24/7</li>
-                  <li>Tutoriais</li>
-                  <li>FAQ</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-white mb-3">Empresa</h4>
-                <ul className="space-y-2 text-slate-400">
-                  <li>Sobre Nós</li>
-                  <li>Blog</li>
-                  <li>Carreiras</li>
-                  <li>Privacidade</li>
-                </ul>
-              </div>
-            </motion.div>
-            <motion.p 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 1.0 }}
-              className="text-sm text-slate-500 border-t border-slate-700 pt-6"
-            >
-              © 2025 Controle Financeiro by Guilherme Cirelli. Todos os direitos reservados.
-            </motion.p>
-          </motion.div>
+              <p className="text-slate-400">
+                A melhor plataforma para gerenciar suas finanças pessoais
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-4">Produto</h3>
+              <ul className="space-y-2 text-slate-400">
+                <li><Link href="/features" className="hover:text-white transition-colors">Funcionalidades</Link></li>
+                <li><Link href="/pricing" className="hover:text-white transition-colors">Preços</Link></li>
+                <li><Link href="/security" className="hover:text-white transition-colors">Segurança</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-4">Suporte</h3>
+              <ul className="space-y-2 text-slate-400">
+                <li><Link href="/help" className="hover:text-white transition-colors">Central de Ajuda</Link></li>
+                <li><Link href="/contact" className="hover:text-white transition-colors">Contato</Link></li>
+                <li><Link href="/status" className="hover:text-white transition-colors">Status</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-4">Legal</h3>
+              <ul className="space-y-2 text-slate-400">
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacidade</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">Termos</Link></li>
+                <li><Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-800 mt-12 pt-8 text-center text-slate-400">
+            <p>&copy; 2024 Controle Financeiro. Todos os direitos reservados.</p>
+          </div>
         </div>
-      </motion.footer>
+      </footer>
     </div>
   );
 }

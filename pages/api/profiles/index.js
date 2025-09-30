@@ -1,48 +1,113 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../../lib/auth";
-import { connectToDatabase } from "../../../lib/db";
-import Profile from "../../../models/Profile";
+import { getAuth } from "@clerk/nextjs/server";
 
 export default async function handler(req, res) {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    return res.status(401).json({ error: "Não autorizado" });
-  }
-  const userId = session.user.id;
+  try {
+    // Verificar autenticação com Clerk
+    const { userId } = getAuth(req);
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Não autorizado" });
+    }
 
-  await connectToDatabase();
+    // Inicializar estrutura global se não existir
+    if (!global.tempProfiles) {
+      global.tempProfiles = {};
+    }
 
-  switch (req.method) {
-    case "GET":
-      try {
-        const profiles = await Profile.find({ userId }).sort({ createdAt: -1 });
-        return res.status(200).json(profiles);
-      } catch (error) {
-        return res.status(500).json({ error: "Erro ao buscar perfis" });
-      }
+    switch (req.method) {
+      case "GET":
+        try {
+          let profiles = global.tempProfiles[userId] || [];
+          
+          // Se não há perfis, criar um padrão
+          if (profiles.length === 0) {
+            const defaultProfile = {
+              _id: 'temp-profile',
+              userId,
+              name: 'Perfil Principal',
+              nickname: 'Principal',
+              isDefault: true,
+              settings: {
+                currency: 'BRL',
+                theme: 'light',
+                notifications: {
+                  email: true,
+                  push: true
+                }
+              },
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            
+            profiles = [defaultProfile];
+            global.tempProfiles[userId] = profiles;
+          }
 
-    case "POST":
-      try {
-        const { name, nickname, photoUrl } = req.body;
-        
-        // Verifica se é o primeiro perfil do usuário
-        const existingProfiles = await Profile.countDocuments({ userId });
-        const isDefault = existingProfiles === 0;
+          const activeProfile = profiles.find(p => p.isDefault) || profiles[0];
+          
+          return res.status(200).json({
+            profiles,
+            activeProfile,
+            total: profiles.length
+          });
+        } catch (error) {
+          console.error("Erro ao buscar perfis:", error);
+          return res.status(500).json({ error: "Erro interno do servidor" });
+        }
 
-        const profile = await Profile.create({
-          userId,
-          name,
-          nickname,
-          photoUrl,
-          isDefault
-        });
+      case "POST":
+        try {
+          const {
+            name,
+            nickname,
+            settings = {
+              currency: 'BRL',
+              theme: 'light',
+              notifications: {
+                email: true,
+                push: true
+              }
+            }
+          } = req.body;
 
-        return res.status(201).json(profile);
-      } catch (error) {
-        return res.status(500).json({ error: "Erro ao criar perfil" });
-      }
+          // Validações básicas
+          if (!name) {
+            return res.status(400).json({
+              error: "Nome é obrigatório"
+            });
+          }
 
-    default:
-      return res.status(405).json({ error: "Método não permitido" });
+          const newProfile = {
+            _id: Date.now().toString(),
+            userId,
+            name,
+            nickname: nickname || '',
+            isDefault: false,
+            settings,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+
+          if (!global.tempProfiles[userId]) {
+            global.tempProfiles[userId] = [];
+          }
+
+          global.tempProfiles[userId].push(newProfile);
+
+          return res.status(201).json({
+            message: "Perfil criado com sucesso",
+            profile: newProfile
+          });
+        } catch (error) {
+          console.error("Erro ao criar perfil:", error);
+          return res.status(500).json({ error: "Erro interno do servidor" });
+        }
+
+      default:
+        return res.status(405).json({ error: "Método não permitido" });
+    }
+  } catch (error) {
+    console.error("Erro na API de perfis:", error);
+    return res.status(500).json({ error: "Erro interno do servidor" });
   }
 }

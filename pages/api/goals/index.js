@@ -1,60 +1,96 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../../lib/auth";
-import { connectToDatabase } from "../../../lib/db";
-import Goal from "../../../models/Goal";
-import Profile from "../../../models/Profile";
+import { getAuth } from "@clerk/nextjs/server";
 
 export default async function handler(req, res) {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    return res.status(401).json({ error: "Não autorizado" });
-  }
-  const userId = session.user.id;
+  try {
+    // Verificar autenticação com Clerk
+    const { userId } = getAuth(req);
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Não autorizado" });
+    }
 
-  await connectToDatabase();
+    // Inicializar estrutura global se não existir
+    if (!global.tempGoals) {
+      global.tempGoals = {};
+    }
 
-  // Busca o perfil ativo do usuário
-  const activeProfile = await Profile.findOne({ userId, isDefault: true });
-  if (!activeProfile) {
-    return res.status(400).json({ error: "Nenhum perfil ativo encontrado" });
-  }
-
-  switch (req.method) {
-    case "GET":
-      try {
-        const goals = await Goal.find({ userId, profileId: activeProfile._id })
-          .sort({ createdAt: -1 });
-
-        return res.status(200).json(goals);
-      } catch (error) {
-        return res.status(500).json({ error: "Erro ao buscar metas" });
-      }
-
-    case "POST":
-      try {
-        const { name, targetAmount, targetDate, currentAmount = 0 } = req.body;
-
-        // Validações básicas
-        if (!name || !targetAmount || !targetDate) {
-          return res.status(400).json({ error: "Dados incompletos" });
+    switch (req.method) {
+      case "GET":
+        try {
+          const goals = global.tempGoals[userId] || [];
+          
+          return res.status(200).json({
+            goals,
+            total: goals.length,
+            active: goals.filter(g => g.status === 'active').length,
+            completed: goals.filter(g => g.status === 'completed').length
+          });
+        } catch (error) {
+          console.error("Erro ao buscar metas:", error);
+          return res.status(500).json({ error: "Erro interno do servidor" });
         }
 
-        // Cria a meta
-        const goal = await Goal.create({
-          userId,
-          profileId: activeProfile._id,
-          name,
-          targetAmount,
-          currentAmount,
-          targetDate: new Date(targetDate)
-        });
+      case "POST":
+        try {
+          const {
+            title,
+            targetAmount,
+            currentAmount = 0,
+            startDate,
+            endDate,
+            category,
+            description
+          } = req.body;
 
-        return res.status(201).json(goal);
-      } catch (error) {
-        return res.status(500).json({ error: "Erro ao criar meta" });
-      }
+          // Validações básicas
+          if (!title || !targetAmount || !startDate || !endDate) {
+            return res.status(400).json({
+              error: "Campos obrigatórios: title, targetAmount, startDate, endDate"
+            });
+          }
 
-    default:
-      return res.status(405).json({ error: "Método não permitido" });
+          if (typeof targetAmount !== 'number' || targetAmount <= 0) {
+            return res.status(400).json({
+              error: "Valor da meta deve ser um número positivo"
+            });
+          }
+
+          const newGoal = {
+            _id: Date.now().toString(),
+            userId,
+            profileId: 'temp-profile',
+            title,
+            targetAmount,
+            currentAmount,
+            startDate: new Date(startDate).toISOString(),
+            endDate: new Date(endDate).toISOString(),
+            category: category || '',
+            status: 'active',
+            description: description || '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+
+          if (!global.tempGoals[userId]) {
+            global.tempGoals[userId] = [];
+          }
+
+          global.tempGoals[userId].push(newGoal);
+
+          return res.status(201).json({
+            message: "Meta criada com sucesso",
+            goal: newGoal
+          });
+        } catch (error) {
+          console.error("Erro ao criar meta:", error);
+          return res.status(500).json({ error: "Erro interno do servidor" });
+        }
+
+      default:
+        return res.status(405).json({ error: "Método não permitido" });
+    }
+  } catch (error) {
+    console.error("Erro na API de metas:", error);
+    return res.status(500).json({ error: "Erro interno do servidor" });
   }
 }

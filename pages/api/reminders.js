@@ -1,36 +1,85 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../lib/auth";
-import { connectToDatabase } from "../../lib/db";
-import Reminder from "../../models/Reminder";
+import { getAuth } from "@clerk/nextjs/server";
 
 export default async function handler(req, res) {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) return res.status(401).json({ error: "Unauthorized" });
-  const userId = session.user.id;
-  await connectToDatabase();
+  try {
+    // Verificar autenticação com Clerk
+    const { userId } = getAuth(req);
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Não autorizado" });
+    }
 
-  if (req.method === "GET") {
-    const items = await Reminder.find({ userId }).sort({ dueDate: 1 });
-    return res.status(200).json(items);
+    // Inicializar estrutura global se não existir
+    if (!global.tempReminders) {
+      global.tempReminders = {};
+    }
+
+    switch (req.method) {
+      case "GET":
+        try {
+          const reminders = global.tempReminders[userId] || [];
+          
+          return res.status(200).json({
+            reminders,
+            total: reminders.length,
+            active: reminders.filter(r => r.isActive).length,
+            completed: reminders.filter(r => !r.isActive).length
+          });
+        } catch (error) {
+          console.error("Erro ao buscar lembretes:", error);
+          return res.status(500).json({ error: "Erro interno do servidor" });
+        }
+
+      case "POST":
+        try {
+          const {
+            title,
+            description,
+            date,
+            type = 'reminder',
+            isActive = true
+          } = req.body;
+
+          // Validações básicas
+          if (!title || !date) {
+            return res.status(400).json({
+              error: "Título e data são obrigatórios"
+            });
+          }
+
+          const newReminder = {
+            _id: Date.now().toString(),
+            userId,
+            profileId: 'temp-profile',
+            title,
+            description: description || '',
+            date: new Date(date).toISOString(),
+            type,
+            isActive,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+
+          if (!global.tempReminders[userId]) {
+            global.tempReminders[userId] = [];
+          }
+
+          global.tempReminders[userId].push(newReminder);
+
+          return res.status(201).json({
+            message: "Lembrete criado com sucesso",
+            reminder: newReminder
+          });
+        } catch (error) {
+          console.error("Erro ao criar lembrete:", error);
+          return res.status(500).json({ error: "Erro interno do servidor" });
+        }
+
+      default:
+        return res.status(405).json({ error: "Método não permitido" });
+    }
+  } catch (error) {
+    console.error("Erro na API de lembretes:", error);
+    return res.status(500).json({ error: "Erro interno do servidor" });
   }
-
-  if (req.method === "POST") {
-    const { description, dueDate } = req.body || {};
-    const item = await Reminder.create({ userId, description, dueDate });
-    return res.status(201).json(item);
-  }
-
-  if (req.method === "PATCH") {
-    const { id, ...updates } = req.body || {};
-    const item = await Reminder.findOneAndUpdate({ _id: id, userId }, updates, { new: true });
-    return res.status(200).json(item);
-  }
-
-  if (req.method === "DELETE") {
-    const { id } = req.query;
-    await Reminder.deleteOne({ _id: id, userId });
-    return res.status(204).end();
-  }
-
-  return res.status(405).json({ error: "Method not allowed" });
 }

@@ -1,34 +1,14 @@
-import { withAuth } from "next-auth/middleware";
+import { authMiddleware } from "@clerk/nextjs";
 
-export default withAuth(
-  function middleware(req) {
-    // Middleware logic here if needed
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        // Allow access to public routes
-        const publicRoutes = ["/", "/auth/signin", "/auth/signup"];
-        if (publicRoutes.includes(req.nextUrl.pathname)) {
-          return true;
-        }
-        
-        // Allow API auth routes
-        if (req.nextUrl.pathname.startsWith('/api/auth/')) {
-          return true;
-        }
-        
-        // Allow API transactions routes (for testing)
-        if (req.nextUrl.pathname.startsWith('/api/transactions')) {
-          return true;
-        }
-        
-        // Require authentication for all other routes
-        return !!token;
-      },
-    },
-  }
-);
+export default authMiddleware({
+  publicRoutes: [
+    "/",
+    "/auth/signin", 
+    "/auth/signup",
+    "/api/auth/(.*)",
+    "/api/transactions/test"
+  ],
+});
 
 export const config = {
   matcher: [

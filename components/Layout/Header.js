@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { useSession, signOut } from "next-auth/react";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { useRouter } from 'next/router';
 import { ChevronDown, Settings, Users, LogOut, Edit, User, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
 export default function Header() {
-  const { data: session } = useSession();
+  const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isEditingNickname, setIsEditingNickname] = useState(false);
@@ -25,38 +26,12 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Inicializar nickname quando a sessão estiver disponível
+  // Inicializar nickname quando o usuário estiver disponível
   useEffect(() => {
-    if (session?.user?.name && !nickname) {
-      setNickname(session.user.name);
+    if (user?.firstName && !nickname) {
+      setNickname(user.firstName);
     }
-  }, [session?.user?.name, nickname]);
-
-  // Buscar dados do perfil do usuário
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!session?.user?.id) return;
-      
-      console.log('Buscando perfil do usuário:', session.user);
-      
-      try {
-        const response = await fetch('/api/user/profile');
-        if (response.ok) {
-          const userData = await response.json();
-          console.log('Dados do perfil recebidos:', userData);
-          setNickname(userData.name || session.user.name || 'Usuário');
-        } else {
-          console.error('Erro na resposta da API:', response.status);
-          setNickname(session?.user?.name || 'Usuário');
-        }
-      } catch (error) {
-        console.error('Erro ao buscar perfil do usuário:', error);
-        setNickname(session?.user?.name || 'Usuário');
-      }
-    };
-
-    fetchUserProfile();
-  }, [session?.user?.id, session?.user?.name]);
+  }, [user, nickname]);
 
   const handleNicknameSubmit = async (e) => {
     e.preventDefault();
@@ -64,183 +39,172 @@ export default function Header() {
     
     setIsLoading(true);
     try {
-      const response = await fetch('/api/user/profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: nickname.trim(),
-        }),
+      // Atualizar o primeiro nome do usuário no Clerk
+      await user.update({
+        firstName: nickname.trim()
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        setNickname(result.user.name);
-        setIsEditingNickname(false);
-      } else {
-        const error = await response.json();
-        alert('Erro ao atualizar nome: ' + error.error);
-      }
+      
+      setIsEditingNickname(false);
     } catch (error) {
-      console.error('Erro ao atualizar nome:', error);
-      alert('Erro ao atualizar nome. Tente novamente.');
+      console.error('Erro ao atualizar nickname:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  };
+
+  if (!isLoaded) {
+    return (
+      <header className="h-16 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm fixed top-0 right-0 left-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+          <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded animate-pulse"></div>
+          <div className="w-24 h-8 bg-slate-200 dark:bg-slate-700 rounded animate-pulse"></div>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="h-16 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm fixed top-0 right-0 left-0 z-20">
-      <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-4 lg:px-6">
-            {/* Logo/Title */}
-            <div className="flex-1 flex items-center space-x-3">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200"
-              >
-                <Image
-                  src="/images/robo-logo.png"
-                  alt="Logo"
-                  width={28}
-                  height={28}
-                  className="w-7 h-7 rounded-full"
-                />
-                <h1 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Controle Financeiro
-                </h1>
-              </button>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+        {/* Logo e título */}
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200"
+        >
+          <Image
+            src="/images/robo-logo.png"
+            alt="Logo"
+            width={28}
+            height={28}
+            className="w-7 h-7 rounded-full"
+          />
+          <h1 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Controle Financeiro
+          </h1>
+        </button>
 
-        {/* User Profile */}
-        <div className="relative flex items-center space-x-4" ref={dropdownRef}>
-          {/* Notificações */}
-          <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-blue-600 rounded-full" />
-          </button>
-
-          {/* Menu de Usuário */}
-          <div className="relative">
+        {/* Área do usuário */}
+        {user ? (
+          <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center space-x-3 hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors"
+              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-medium shadow-lg overflow-hidden">
-                {session?.user?.image ? (
-                  <img 
-                    src={session.user.image} 
-                    alt="Avatar" 
-                    className="w-10 h-10 rounded-xl object-cover"
-                  />
-                ) : (
-                  nickname.charAt(0).toUpperCase()
-                )}
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                <span className="text-white text-sm font-medium">
+                  {user.firstName ? user.firstName.charAt(0).toUpperCase() : user.emailAddresses[0]?.emailAddress.charAt(0).toUpperCase()}
+                </span>
               </div>
-              <div className="hidden md:block text-left">
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 line-clamp-1">{nickname}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                      {session?.user?.email}
-                    </p>
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  {isEditingNickname ? (
+                    <form onSubmit={handleNicknameSubmit} className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={nickname}
+                        onChange={(e) => setNickname(e.target.value)}
+                        className="text-sm bg-transparent border-b border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                        autoFocus
+                        onBlur={() => setIsEditingNickname(false)}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="text-xs text-blue-600 hover:text-blue-700"
+                      >
+                        {isLoading ? '...' : '✓'}
+                      </button>
+                    </form>
+                  ) : (
+                    <span 
+                      className="cursor-pointer hover:text-blue-600 transition-colors"
+                      onClick={() => setIsEditingNickname(true)}
+                    >
+                      {user.firstName || 'Usuário'}
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {user.emailAddresses[0]?.emailAddress}
+                </p>
               </div>
-              <ChevronDown className="w-4 h-4 text-slate-400" />
+              <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
             </button>
 
+            {/* Dropdown */}
             <AnimatePresence>
               {isProfileOpen && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-xl overflow-hidden backdrop-blur-sm"
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-2 z-50"
                 >
-                  {/* Cabeçalho do Perfil */}
-                  <div className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-500">
-                    {isEditingNickname ? (
-                      <form onSubmit={handleNicknameSubmit} className="flex space-x-2">
-                        <input
-                          type="text"
-                          value={nickname}
-                          onChange={(e) => setNickname(e.target.value)}
-                          className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 shadow-inner focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                          autoFocus
-                        />
-                        <button
-                          type="submit"
-                          disabled={isLoading}
-                          className="px-4 py-2 text-sm bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isLoading ? 'Salvando...' : 'Salvar'}
-                        </button>
-                      </form>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">{nickname}</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-200">
-                                {session?.user?.email}
-                              </p>
-                            </div>
-                        <button
-                          onClick={() => setIsEditingNickname(true)}
-                          className="p-2 hover:bg-indigo-100 dark:hover:bg-gray-500 rounded-lg transition-colors"
-                        >
-                          <Edit className="w-4 h-4 text-gray-600 dark:text-gray-200" />
-                        </button>
-                      </div>
-                    )}
+                  <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                      {user.firstName || 'Usuário'}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {user.emailAddresses[0]?.emailAddress}
+                    </p>
                   </div>
 
-                  {/* Menu de Opções */}
                   <div className="py-2">
-                        <button 
-                          onClick={() => router.push('/user/profile')}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center space-x-3 transition-colors"
-                        >
-                          <div className="w-8 h-8 bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                            <User className="w-4 h-4 text-gray-700 dark:text-white" />
-                          </div>
-                          <span className="text-gray-800 dark:text-white font-medium">Meu Perfil</span>
-                        </button>
-
-                    <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center space-x-3 transition-colors">
-                      <div className="w-8 h-8 bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                        <Settings className="w-4 h-4 text-gray-700 dark:text-white" />
-                      </div>
-                      <span className="text-gray-800 dark:text-white font-medium">Configurações</span>
+                    <button
+                      onClick={() => router.push('/user/profile')}
+                      className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>Perfil</span>
                     </button>
 
-                        <button 
-                          onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center space-x-3 transition-colors"
-                        >
-                          <div className="w-8 h-8 bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                            <Users className="w-4 h-4 text-gray-700 dark:text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <span className="text-gray-800 dark:text-white font-medium">Trocar Conta</span>
-                            <p className="text-xs text-gray-600 dark:text-gray-300">Fazer login com outra conta</p>
-                          </div>
-                        </button>
+                    <button
+                      onClick={() => router.push('/dashboard')}
+                      className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <Settings className="w-4 h-4" />
+                      <span>Configurações</span>
+                    </button>
 
-                        <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
-                          <button
-                            onClick={() => signOut({ callbackUrl: '/' })}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center space-x-3 text-red-600 dark:text-red-400 transition-colors"
-                          >
-                            <div className="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                              <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
-                            </div>
-                            <span className="font-medium">Sair</span>
-                          </button>
-                        </div>
+                    <button
+                      onClick={() => router.push('/analytics')}
+                      className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <Bell className="w-4 h-4" />
+                      <span>Relatórios</span>
+                    </button>
+
+                    <div className="border-t border-slate-200 dark:border-slate-700 my-2"></div>
+
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sair</span>
+                    </button>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
-        </div>
+        ) : (
+          <button
+            onClick={() => router.push('/')}
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium"
+          >
+            Entrar
+          </button>
+        )}
       </div>
     </header>
   );

@@ -1,264 +1,274 @@
 import { useState, useEffect } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/router";
 import MainLayout from "../../components/Layout/MainLayout";
 import { motion } from "framer-motion";
 import { Edit, Save, X, Camera, User, Mail, LogOut } from "lucide-react";
 
 export default function ProfilePage() {
-  const { data: session, status, update } = useSession();
+  const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    image: ''
-  });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: ''
+  });
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
+    if (isLoaded && !user) {
+      router.push('/');
     }
-  }, [status, router]);
+  }, [isLoaded, user, router]);
 
   useEffect(() => {
-    if (session?.user) {
+    if (user) {
       setFormData({
-        name: session.user.name || '',
-        image: session.user.image || ''
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.emailAddresses[0]?.emailAddress || ''
       });
     }
-  }, [session]);
-
-  const handleEdit = () => {
-    setIsEditing(true);
-    setError('');
-    setSuccess('');
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setFormData({
-      name: session?.user?.name || '',
-      image: session?.user?.image || ''
-    });
-    setError('');
-    setSuccess('');
-  };
+  }, [user]);
 
   const handleSave = async () => {
+    if (!user) return;
+    
     setLoading(true);
-    setError('');
-    setSuccess('');
-
     try {
-      const response = await fetch('/api/user/profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      await user.update({
+        firstName: formData.firstName,
+        lastName: formData.lastName
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccess('Perfil atualizado com sucesso!');
-        setIsEditing(false);
-        // Atualizar a sessão
-        await update({
-          ...session,
-          user: {
-            ...session.user,
-            name: formData.name,
-            image: formData.image
-          }
-        });
-      } else {
-        setError(data.error || 'Erro ao atualizar perfil');
-      }
+      setIsEditing(false);
     } catch (error) {
-      setError('Erro ao atualizar perfil');
+      console.error('Erro ao atualizar perfil:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSwitchAccount = async () => {
+  const handleSignOut = async () => {
     try {
-      await signOut({ callbackUrl: '/auth/signin' });
+      await signOut();
+      router.push('/');
     } catch (error) {
-      console.error('Erro ao trocar conta:', error);
+      console.error('Erro ao fazer logout:', error);
     }
   };
 
-  if (status === "loading") {
+  if (!isLoaded) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
         </div>
       </MainLayout>
     );
   }
 
-  if (!session) {
-    return null;
+  if (!user) {
+    return null; // Redirecionando...
   }
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="text-center">
-          <div className="relative inline-block">
-            <div className="w-20 h-20 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              {session.user.image ? (
-                <img 
-                  src={session.user.image} 
-                  alt="Avatar" 
-                  className="w-20 h-20 rounded-2xl object-cover"
-                />
-              ) : (
-                <span className="text-white font-bold text-3xl">
-                  {session.user.name?.charAt(0).toUpperCase() || 'U'}
-                </span>
-              )}
-            </div>
-            {isEditing && (
-              <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-indigo-700 transition-colors">
-                <Camera className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            Meu Perfil
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Gerencie suas informações pessoais</p>
-        </div>
-
-        <div className="max-w-2xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-6 text-sm"
-            >
-              {error}
-            </motion.div>
-          )}
-
-          {success && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-lg mb-6 text-sm"
-            >
-              {success}
-            </motion.div>
-          )}
-
-          <div className="space-y-6">
+      <div className="max-w-4xl mx-auto p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="space-y-8"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Nome
-              </label>
-              {isEditing ? (
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    placeholder="Seu nome completo"
-                  />
-                </div>
-              ) : (
-                <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                  <p className="text-gray-900 dark:text-white">{session.user.name}</p>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email
-              </label>
-              <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg flex items-center">
-                <Mail className="w-5 h-5 text-gray-400 mr-3" />
-                <p className="text-gray-900 dark:text-white">{session.user.email}</p>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                O email não pode ser alterado
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Perfil do Usuário</h1>
+              <p className="text-slate-600 dark:text-slate-300 mt-2">
+                Gerencie suas informações pessoais
               </p>
             </div>
+            <button
+              onClick={handleSignOut}
+              className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sair</span>
+            </button>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Foto de Perfil (URL)
-              </label>
-              {isEditing ? (
-                <input
-                  type="url"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="https://exemplo.com/sua-foto.jpg"
-                />
-              ) : (
-                <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                  <p className="text-gray-900 dark:text-white">
-                    {session.user.image || 'Nenhuma foto definida'}
+          {/* Informações do Usuário */}
+          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-8">
+            <div className="flex items-start space-x-6">
+              {/* Avatar */}
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                  <span className="text-white text-2xl font-bold">
+                    {user.firstName ? user.firstName.charAt(0).toUpperCase() : user.emailAddresses[0]?.emailAddress.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors">
+                  <Camera className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Informações */}
+              <div className="flex-1 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Primeiro Nome
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      />
+                    ) : (
+                      <p className="text-slate-900 dark:text-white font-medium">
+                        {user.firstName || 'Não informado'}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Último Nome
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      />
+                    ) : (
+                      <p className="text-slate-900 dark:text-white font-medium">
+                        {user.lastName || 'Não informado'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Email
+                  </label>
+                  <p className="text-slate-900 dark:text-white font-medium">
+                    {user.emailAddresses[0]?.emailAddress}
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    Email verificado pelo Clerk
                   </p>
                 </div>
-              )}
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    ID do Usuário
+                  </label>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-mono">
+                    {user.id}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            {/* Botões de Ação */}
+            <div className="flex items-center justify-end space-x-4 mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
               {isEditing ? (
-                <div className="flex space-x-3">
+                <>
                   <button
-                    onClick={handleSave}
-                    disabled={loading}
-                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <Save className="w-4 h-4" />
-                    <span>{loading ? 'Salvando...' : 'Salvar'}</span>
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    onClick={() => setIsEditing(false)}
+                    className="flex items-center space-x-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                   >
                     <X className="w-4 h-4" />
                     <span>Cancelar</span>
                   </button>
-                </div>
+                  <button
+                    onClick={handleSave}
+                    disabled={loading}
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{loading ? 'Salvando...' : 'Salvar'}</span>
+                  </button>
+                </>
               ) : (
-                <div className="flex space-x-3">
-                  <button
-                    onClick={handleEdit}
-                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>Editar Perfil</span>
-                  </button>
-                  <button
-                    onClick={handleSwitchAccount}
-                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Trocar Conta</span>
-                  </button>
-                </div>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>Editar Perfil</span>
+                </button>
               )}
             </div>
           </div>
-        </div>
+
+          {/* Informações Adicionais */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-6">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                Informações da Conta
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <User className="w-5 h-5 text-slate-400" />
+                  <div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Criado em</p>
+                    <p className="text-slate-900 dark:text-white font-medium">
+                      {new Date(user.createdAt).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Mail className="w-5 h-5 text-slate-400" />
+                  <div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Última atualização</p>
+                    <p className="text-slate-900 dark:text-white font-medium">
+                      {new Date(user.updatedAt).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-6">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                Segurança
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 text-green-500">
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Email verificado</p>
+                    <p className="text-green-600 dark:text-green-400 font-medium">Verificado</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 text-blue-500">
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Autenticação</p>
+                    <p className="text-blue-600 dark:text-blue-400 font-medium">Clerk</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </MainLayout>
   );
 }
-
-

@@ -1,73 +1,108 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../../lib/auth";
-import { connectToDatabase } from "../../../lib/db";
-import Goal from "../../../models/Goal";
-import Profile from "../../../models/Profile";
+import { getAuth } from "@clerk/nextjs/server";
 
 export default async function handler(req, res) {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    return res.status(401).json({ error: "Não autorizado" });
-  }
-  const userId = session.user.id;
+  try {
+    // Verificar autenticação com Clerk
+    const { userId } = getAuth(req);
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Não autorizado" });
+    }
 
-  await connectToDatabase();
-  const { id } = req.query;
+    const { id } = req.query;
 
-  // Busca o perfil ativo do usuário
-  const activeProfile = await Profile.findOne({ userId, isDefault: true });
-  if (!activeProfile) {
-    return res.status(400).json({ error: "Nenhum perfil ativo encontrado" });
-  }
+    if (!id) {
+      return res.status(400).json({ error: "ID da meta é obrigatório" });
+    }
 
-  switch (req.method) {
-    case "PATCH":
-      try {
-        const { name, targetAmount, currentAmount, targetDate } = req.body;
-        const updates = { name, targetAmount, currentAmount, targetDate };
+    // Inicializar estrutura global se não existir
+    if (!global.tempGoals) {
+      global.tempGoals = {};
+    }
 
-        // Remove campos undefined
-        Object.keys(updates).forEach(key => 
-          updates[key] === undefined && delete updates[key]
-        );
+    const goals = global.tempGoals[userId] || [];
+    const goal = goals.find(g => g._id === id);
 
-        if (targetDate) {
-          updates.targetDate = new Date(targetDate);
+    if (!goal) {
+      return res.status(404).json({ error: "Meta não encontrada" });
+    }
+
+    switch (req.method) {
+      case "GET":
+        return res.status(200).json({ goal });
+
+      case "PUT":
+        try {
+          const {
+            title,
+            targetAmount,
+            currentAmount,
+            startDate,
+            endDate,
+            category,
+            description,
+            status
+          } = req.body;
+
+          // Validações básicas
+          if (targetAmount && (typeof targetAmount !== 'number' || targetAmount <= 0)) {
+            return res.status(400).json({
+              error: "Valor da meta deve ser um número positivo"
+            });
+          }
+
+          // Atualizar meta
+          const goalIndex = goals.findIndex(g => g._id === id);
+          if (goalIndex === -1) {
+            return res.status(404).json({ error: "Meta não encontrada" });
+          }
+
+          const updatedGoal = {
+            ...goals[goalIndex],
+            ...(title && { title }),
+            ...(targetAmount && { targetAmount }),
+            ...(currentAmount !== undefined && { currentAmount }),
+            ...(startDate && { startDate: new Date(startDate).toISOString() }),
+            ...(endDate && { endDate: new Date(endDate).toISOString() }),
+            ...(category !== undefined && { category }),
+            ...(description !== undefined && { description }),
+            ...(status && { status }),
+            updatedAt: new Date().toISOString()
+          };
+
+          global.tempGoals[userId][goalIndex] = updatedGoal;
+
+          return res.status(200).json({
+            message: "Meta atualizada com sucesso",
+            goal: updatedGoal
+          });
+        } catch (error) {
+          console.error("Erro ao atualizar meta:", error);
+          return res.status(500).json({ error: "Erro interno do servidor" });
         }
 
-        const goal = await Goal.findOneAndUpdate(
-          { _id: id, userId, profileId: activeProfile._id },
-          updates,
-          { new: true }
-        );
+      case "DELETE":
+        try {
+          const goalIndex = goals.findIndex(g => g._id === id);
+          if (goalIndex === -1) {
+            return res.status(404).json({ error: "Meta não encontrada" });
+          }
 
-        if (!goal) {
-          return res.status(404).json({ error: "Meta não encontrada" });
+          global.tempGoals[userId].splice(goalIndex, 1);
+
+          return res.status(200).json({
+            message: "Meta excluída com sucesso"
+          });
+        } catch (error) {
+          console.error("Erro ao excluir meta:", error);
+          return res.status(500).json({ error: "Erro interno do servidor" });
         }
 
-        return res.status(200).json(goal);
-      } catch (error) {
-        return res.status(500).json({ error: "Erro ao atualizar meta" });
-      }
-
-    case "DELETE":
-      try {
-        const goal = await Goal.findOneAndDelete({
-          _id: id,
-          userId,
-          profileId: activeProfile._id
-        });
-
-        if (!goal) {
-          return res.status(404).json({ error: "Meta não encontrada" });
-        }
-
-        return res.status(204).end();
-      } catch (error) {
-        return res.status(500).json({ error: "Erro ao excluir meta" });
-      }
-
-    default:
-      return res.status(405).json({ error: "Método não permitido" });
+      default:
+        return res.status(405).json({ error: "Método não permitido" });
+    }
+  } catch (error) {
+    console.error("Erro na API de meta individual:", error);
+    return res.status(500).json({ error: "Erro interno do servidor" });
   }
 }
