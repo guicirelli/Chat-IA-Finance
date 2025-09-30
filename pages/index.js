@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useUser, SignInButton, SignUpButton } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/router';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { TrendingUp, Shield, BarChart3, Target, CreditCard, FileText, CheckCircle, ArrowRight, Users, Clock, Zap } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import ThemeToggle from '../components/ThemeToggle';
+import CustomLogin from '../components/CustomLogin';
 
 export default function Landing() {
   const { user, isLoaded } = useUser();
@@ -52,16 +54,13 @@ export default function Landing() {
                 </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <SignInButton mode="modal">
-                <button className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors">
-                  Entrar
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium">
-                  Criar Conta
-                </button>
-              </SignUpButton>
+              <ThemeToggle />
+              <button
+                onClick={() => router.push('/')}
+                className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors"
+              >
+                Entrar
+              </button>
               </div>
           </div>
         </div>
@@ -152,68 +151,8 @@ export default function Landing() {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-8"
             >
-              <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                  Comece sua jornada financeira
-                  </h3>
-                <p className="text-slate-600 dark:text-slate-300">
-                  Crie sua conta gratuitamente e tenha controle total
-                  </p>
-                </div>
-                
-              <div className="space-y-6">
-                <SignUpButton mode="modal">
-                  <button className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold text-lg">
-                    Criar Conta Gratuita
-                  </button>
-                </SignUpButton>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-300 dark:border-slate-600" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-slate-800 text-slate-500">ou</span>
-                    </div>
-                </div>
-
-                <SignInButton mode="modal">
-                  <button className="w-full py-4 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all duration-200 font-semibold">
-                    Já tenho uma conta
-                  </button>
-                </SignInButton>
-              </div>
-
-              {/* Card de Confiança */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="mt-8 bg-slate-50 dark:bg-slate-700/50 rounded-xl p-6"
-              >
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                  </div>
-                  <h4 className="font-semibold text-slate-900 dark:text-white">Por que escolher?</h4>
-                </div>
-                <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
-                  <li className="flex items-center space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>Grátis para sempre</span>
-                  </li>
-                  <li className="flex items-center space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>Interface intuitiva</span>
-                  </li>
-                  <li className="flex items-center space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>Relatórios detalhados</span>
-                  </li>
-                </ul>
-              </motion.div>
+              <CustomLogin onSuccess={() => router.push('/dashboard')} />
             </motion.div>
           </div>
         </div>

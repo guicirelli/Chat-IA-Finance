@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { ChevronDown, Settings, Users, LogOut, Edit, User, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import ThemeToggle from '../ThemeToggle';
 
 export default function Header() {
   const { user, isLoaded } = useUser();
@@ -92,8 +93,11 @@ export default function Header() {
           </h1>
         </button>
 
-        {/* Área do usuário */}
-        {user ? (
+        {/* Botão de toggle do tema e área do usuário */}
+        <div className="flex items-center space-x-4">
+          <ThemeToggle />
+          
+          {user ? (
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -198,13 +202,14 @@ export default function Header() {
             </AnimatePresence>
           </div>
         ) : (
-          <button
-            onClick={() => router.push('/')}
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium"
-          >
-            Entrar
-          </button>
-        )}
+            <button
+              onClick={() => router.push('/')}
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium"
+            >
+              Entrar
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );

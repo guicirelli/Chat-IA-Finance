@@ -5,6 +5,7 @@ import { TrendingUp, Shield, BarChart3, Target, CreditCard, FileText } from 'luc
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect } from 'react';
+import ThemeToggle from '../../components/ThemeToggle';
 
 export default function SignInPage() {
   const { user, isLoaded } = useUser();
@@ -46,12 +47,15 @@ export default function SignInPage() {
                 Controle Financeiro
               </h1>
             </Link>
-            <Link 
-              href="/"
-              className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors"
-            >
-              Voltar ao início
-            </Link>
+            <div className="flex items-center space-x-4">
+              <ThemeToggle />
+              <Link 
+                href="/"
+                className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors"
+              >
+                Voltar ao início
+              </Link>
+            </div>
           </div>
         </div>
       </header>

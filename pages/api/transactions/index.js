@@ -84,9 +84,12 @@ export default async function handler(req, res) {
             amount,
             date,
             description,
+            note,
             isFixed = false,
             tags = []
           } = req.body;
+
+          console.log('Recebendo transação:', { type, category, amount, date, description, note });
 
           // Validações básicas
           if (!type || !category || !amount || !date) {
@@ -124,14 +127,19 @@ export default async function handler(req, res) {
             category,
             amount,
             date: transactionDate.toISOString(),
-            description: description || '',
+            description: description || note || '',
+            note: note || description || '',
             isFixed,
             tags,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           };
 
+          console.log('Criando nova transação:', newTransaction);
+
           global.tempTransactionsByPeriod[periodKey].push(newTransaction);
+
+          console.log('Transações após adicionar:', global.tempTransactionsByPeriod[periodKey]);
 
           return res.status(201).json({
             message: "Transação criada com sucesso",
