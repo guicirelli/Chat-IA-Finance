@@ -134,12 +134,18 @@ export default function Landing() {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="flex flex-col sm:flex-row gap-4"
               >
-                <SignUpButton mode="modal">
-                  <button className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
-                    <span>Começar Grátis</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
-                </SignUpButton>
+                <button 
+                  onClick={() => {
+                    const loginSection = document.querySelector('.custom-login-section');
+                    if (loginSection) {
+                      loginSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                >
+                  <span>Começar Grátis</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
                 <button className="px-8 py-4 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all duration-200 font-semibold">
                   Ver Demonstração
                 </button>
@@ -151,6 +157,7 @@ export default function Landing() {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
+              className="custom-login-section"
             >
               <CustomLogin onSuccess={() => router.push('/dashboard')} />
             </motion.div>
@@ -306,11 +313,17 @@ export default function Landing() {
                 <p className="text-blue-100 mb-6">
                   Junte-se a milhares de usuários que já transformaram suas finanças
                 </p>
-                <SignUpButton mode="modal">
-                  <button className="w-full py-4 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-200 font-semibold text-lg">
-                    Criar Conta Grátis
-                  </button>
-                </SignUpButton>
+                <button 
+                  onClick={() => {
+                    const loginSection = document.querySelector('.custom-login-section');
+                    if (loginSection) {
+                      loginSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="w-full py-4 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-200 font-semibold text-lg"
+                >
+                  Criar Conta Grátis
+                </button>
               </div>
             </motion.div>
           </div>
