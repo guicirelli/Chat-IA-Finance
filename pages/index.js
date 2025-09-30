@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, TrendingUp, Shield, BarChart3, Target, CreditCard, AlertTriangle, FileText, CheckCircle, ArrowRight, Users, Clock, Zap } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, TrendingUp, Shield, BarChart3, Target, CreditCard, AlertTriangle, FileText, CheckCircle, ArrowRight, Users, Clock, Zap, Phone } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -63,6 +63,13 @@ export default function Landing() {
         // Se for telefone, remover formatação para buscar no banco
         if (loginType === 'phone') {
           loginField = loginField.replace(/\D/g, '');
+          
+          // Validar se o telefone tem pelo menos 10 dígitos (DDD + número)
+          if (loginField.length < 10) {
+            setError('Telefone deve ter pelo menos 10 dígitos');
+            setLoading(false);
+            return;
+          }
         }
         
         const result = await signIn('credentials', {
@@ -75,7 +82,8 @@ export default function Landing() {
         if (result?.error) {
           // Mapear erros específicos
           if (result.error.includes('Usuário não encontrado')) {
-            setError('Usuário não encontrado. Verifique se o email/username está correto.');
+            const fieldName = loginType === 'phone' ? 'telefone' : 'email/username';
+            setError(`Usuário não encontrado. Verifique se o ${fieldName} está correto.`);
           } else if (result.error.includes('Senha incorreta')) {
             setError('Senha incorreta. Tente novamente.');
           } else if (result.error.includes('Conta bloqueada')) {
@@ -204,230 +212,119 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
-      {/* Header */}
-      <motion.header 
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        className="relative z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200/50 dark:border-slate-700/50"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <motion.div 
-              initial={{ x: -50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex items-center space-x-4"
-            >
-              <Image
-                src="/images/robo-logo.png"
-                alt="Logo"
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-full"
-              />
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                  Controle Financeiro
-                </h1>
-                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                  by Guilherme Cirelli
-                </p>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </motion.header>
-
-      {/* Hero Section */}
-      <motion.section 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-        className="relative overflow-hidden min-h-screen flex items-center"
-      >
-        <motion.div 
-          style={{ y }}
-          className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 via-purple-600/5 to-blue-600/10"
-        />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <div className="flex min-h-screen">
+        {/* Lado Esquerdo - Informações e Features */}
+        <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600"></div>
+          <div className="relative z-10 flex flex-col justify-center px-12 text-white">
             <motion.div
-              initial={{ opacity: 0, x: -80 }}
+              initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 1, delay: 0.3 }}
+              transition={{ duration: 0.8 }}
             >
-              <h1 className="text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white leading-tight mb-6">
+              <h1 className="text-4xl font-bold mb-6 leading-tight">
                 Seu dinheiro sob controle,<br />
-                <span className="text-indigo-600">sem esforço</span>
+                <span className="text-indigo-200">sem esforço</span>
               </h1>
-              <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-                className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed mb-8"
-              >
+              <p className="text-xl text-indigo-100 mb-8 leading-relaxed">
                 Tudo o que você precisa para organizar suas finanças sem perder tempo.
-              </motion.p>
-              <motion.div 
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.7 }}
-                className="flex flex-col sm:flex-row gap-4"
-              >
-                <a
-                  href="#login"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const loginSection = document.getElementById('login');
-                    if (loginSection) {
-                      const rect = loginSection.getBoundingClientRect();
-                      const offsetTop = window.pageYOffset + rect.top + 80; // 80px abaixo do topo
-                      window.scrollTo({
-                        top: offsetTop,
-                        behavior: 'smooth'
-                      });
-                    }
-                  }}
-                  className="inline-flex items-center justify-center px-8 py-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
-                >
-                  Começar Grátis
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </a>
-                <a
-                  href="#features"
-                  className="inline-flex items-center justify-center px-8 py-4 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-300 hover:scale-105"
-                >
-                  Ver Recursos
-                </a>
-              </motion.div>
+              </p>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, x: 80 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 1, delay: 0.5 }}
-              className="relative"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="space-y-6"
             >
-              <div className="relative z-10 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 border border-slate-200 dark:border-slate-700">
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                    A melhor solução para uma vida financeira saudável
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    Sistema para controle financeiro online
-                  </p>
+              {features.map((feature, index) => (
+                <div key={index} className="flex items-start space-x-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <feature.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg mb-1">{feature.title}</h3>
+                    <p className="text-indigo-100 text-sm leading-relaxed">{feature.description}</p>
+                  </div>
                 </div>
-                
-                <div className="space-y-4 mb-6">
-                  {controls.map((control, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                      <span className="text-slate-700 dark:text-slate-300">{control}</span>
-                    </div>
-                  ))}
-                </div>
+              ))}
+            </motion.div>
 
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="mt-12 p-6 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20"
+            >
+              <div className="flex items-center space-x-4 mb-4">
+                <Image
+                  src="/images/robo-logo.png"
+                  alt="Robot Calculator"
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 rounded-full"
+                />
+                <div>
+                  <h4 className="font-bold text-lg">Controle Financeiro Inteligente</h4>
+                  <p className="text-indigo-100 text-sm">Mais de 500 mil pessoas confiam</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>Seguro e confiável</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>Interface intuitiva</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>Relatórios detalhados</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>Suporte 24/7</span>
+                </div>
               </div>
             </motion.div>
           </div>
         </div>
-      </motion.section>
 
-      {/* Features Section */}
-      <motion.section 
-        id="features" 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.8 }}
-        className="py-24 bg-white dark:bg-slate-800"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Lado Direito - Formulário de Login/Registro */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center px-8">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-center mb-20"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="w-full max-w-md"
           >
-            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Como o Controle Financeiro vai me ajudar?
-            </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
-              Proporcionando meios para você realizar seus sonhos, metas e objetivos
-            </p>
-          </motion.div>
+            {/* Logo e Título */}
+            <div className="text-center mb-8">
+              <div className="flex justify-center mb-6">
+                <Image
+                  src="/images/robo-logo.png"
+                  alt="Logo"
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 rounded-full shadow-lg"
+                />
+              </div>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                {isLogin ? 'Entrar na sua conta' : 'Criar conta gratuita'}
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400">
+                {isLogin ? 'Acesse seu dashboard financeiro' : 'Comece a controlar suas finanças'}
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="bg-slate-50 dark:bg-slate-700 rounded-2xl p-8 text-center hover:shadow-xl hover:scale-105 transition-all duration-300"
-              >
-                <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <feature.icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-slate-600 dark:text-slate-300">
-                  {feature.description}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </motion.section>
-
-
-      {/* Login Section */}
-      <motion.section 
-        id="login" 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.8 }}
-        className="py-24 bg-slate-50 dark:bg-slate-900"
-      >
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Comece agora mesmo
-            </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-300">
-              Completo, fácil e gratuito
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             {/* Formulário */}
             <motion.div
-              id="login-form"
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="bg-white dark:bg-slate-800 rounded-3xl p-10 shadow-xl border border-slate-200 dark:border-slate-700"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-slate-200 dark:border-slate-700"
             >
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                  {isLogin ? 'Entrar na sua conta' : 'Criar conta gratuita'}
-                </h3>
-                <p className="text-slate-600 dark:text-slate-400">
-                  {isLogin ? 'Acesse seu dashboard financeiro' : 'Comece a controlar suas finanças'}
-                </p>
-              </div>
 
               {error && (
                 <motion.div
@@ -446,7 +343,7 @@ export default function Landing() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {loginType === 'phone' ? 'Telefone' : 'E-mail ou username'}
+                        {loginType === 'phone' ? 'Telefone (ex: 55 11 99999-9999)' : 'E-mail ou username'}
                       </label>
                       <button
                         type="button"
@@ -460,7 +357,11 @@ export default function Landing() {
                       </button>
                     </div>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      {loginType === 'phone' ? (
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      ) : (
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      )}
                       <input
                         type={loginType === 'phone' ? 'tel' : 'text'}
                         name="loginField"
@@ -635,89 +536,214 @@ export default function Landing() {
                 </button>
               </form>
 
-              <div className="mt-6 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    setError('');
-                    setLoginType('email');
-                    setFormData({ username: '', email: '', phone: '', loginField: '', password: '', confirmPassword: '' });
-                  }}
-                  className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors"
-                >
-                  {isLogin ? 'Não tem conta? Criar conta' : 'Já tem conta? Fazer login'}
-                </button>
+              <div className="mt-6 text-center space-y-4">
+                {isLogin && (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Implementar modal de recuperação de senha
+                        alert('Funcionalidade de recuperação de senha será implementada em breve!');
+                      }}
+                      className="text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                    >
+                      Esqueci minha senha
+                    </button>
+                  </div>
+                )}
+                
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsLogin(!isLogin);
+                      setError('');
+                      setLoginType('email');
+                      setFormData({ username: '', email: '', phone: '', loginField: '', password: '', confirmPassword: '' });
+                    }}
+                    className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors"
+                  >
+                    {isLogin ? 'Não tem conta? Criar conta' : 'Já tem conta? Fazer login'}
+                  </button>
+                </div>
               </div>
             </motion.div>
 
-            {/* Benefícios do Login */}
+            {/* Benefícios */}
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-              className="space-y-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="mt-8 text-center"
             >
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Image
-                    src="/images/robo-logo.png"
-                    alt="Robot Calculator"
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div>
-                    <h4 className="font-bold text-lg text-slate-900 dark:text-white">
-                      Controle Financeiro Inteligente
-                    </h4>
-                  </div>
+              <div className="grid grid-cols-2 gap-4 text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex items-center justify-center space-x-2">
+                  <Shield className="w-4 h-4 text-green-500" />
+                  <span>100% Seguro</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span className="text-slate-700 dark:text-slate-300">Seguro e confiável</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span className="text-slate-700 dark:text-slate-300">Interface intuitiva</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span className="text-slate-700 dark:text-slate-300">Relatórios detalhados</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span className="text-slate-700 dark:text-slate-300">Suporte 24/7</span>
-                  </div>
+                <div className="flex items-center justify-center space-x-2">
+                  <CreditCard className="w-4 h-4 text-green-500" />
+                  <span>Gratuito</span>
                 </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <Shield className="w-8 h-8 text-green-500" />
-                  <div>
-                    <h5 className="font-semibold text-slate-900 dark:text-white">100% Seguro</h5>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Seus dados protegidos</p>
-                  </div>
+                <div className="flex items-center justify-center space-x-2">
+                  <FileText className="w-4 h-4 text-green-500" />
+                  <span>Relatórios</span>
                 </div>
-                <div className="flex items-center space-x-3 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <CreditCard className="w-8 h-8 text-green-500" />
-                  <div>
-                    <h5 className="font-semibold text-slate-900 dark:text-white">Completamente Gratuito</h5>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Sem taxas ocultas</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <Zap className="w-8 h-8 text-green-500" />
-                  <div>
-                    <h5 className="font-semibold text-slate-900 dark:text-white">Configuração Rápida</h5>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Em menos de 2 minutos</p>
-                  </div>
+                <div className="flex items-center justify-center space-x-2">
+                  <Target className="w-4 h-4 text-green-500" />
+                  <span>Metas</span>
                 </div>
               </div>
             </motion.div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <motion.section 
+        id="features" 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8 }}
+        className="py-24 bg-white dark:bg-slate-800"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-center mb-20"
+          >
+            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
+              Como o Controle Financeiro vai me ajudar?
+            </h2>
+            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
+              Proporcionando meios para você realizar seus sonhos, metas e objetivos
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="bg-slate-50 dark:bg-slate-700 rounded-2xl p-8 text-center hover:shadow-xl hover:scale-105 transition-all duration-300"
+              >
+                <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <feature.icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-slate-600 dark:text-slate-300">
+                  {feature.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.section>
+
+      {/* Benefits Section */}
+      <motion.section 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8 }}
+        className="py-24 bg-slate-50 dark:bg-slate-900"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-center mb-20"
+          >
+            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
+              Por que escolher nosso sistema?
+            </h2>
+            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
+              Descubra os benefícios que fazem a diferença na sua vida financeira
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {benefits.map((benefit, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="bg-white dark:bg-slate-800 rounded-2xl p-8 text-center hover:shadow-xl hover:scale-105 transition-all duration-300 border border-slate-200 dark:border-slate-700"
+              >
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <benefit.icon className="w-8 h-8 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                  {benefit.title}
+                </h3>
+                <p className="text-slate-600 dark:text-slate-300">
+                  {benefit.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.section>
+
+      {/* Stats Section */}
+      <motion.section 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8 }}
+        className="py-24 bg-indigo-600 dark:bg-indigo-700"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Números que impressionam
+            </h2>
+            <p className="text-xl text-indigo-100 max-w-3xl mx-auto">
+              Confiança de milhares de usuários em todo o Brasil
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { number: "500K+", label: "Usuários ativos", icon: Users },
+              { number: "R$ 50M+", label: "Em transações", icon: TrendingUp },
+              { number: "99.9%", label: "Uptime garantido", icon: Shield },
+              { number: "24/7", label: "Suporte disponível", icon: Clock }
+            ].map((stat, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="text-center"
+              >
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <stat.icon className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-4xl font-bold text-white mb-2">{stat.number}</div>
+                <div className="text-indigo-100">{stat.label}</div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </motion.section>
@@ -763,14 +789,49 @@ export default function Landing() {
             >
               A melhor solução para uma vida financeira saudável
             </motion.p>
-            <motion.p 
+            <motion.div 
               initial={{ y: 20, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.8 }}
-              className="text-sm text-slate-500"
+              className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8"
             >
-              © 2025 Controle Financeiro. Todos os direitos reservados.
+              <div>
+                <h4 className="font-semibold text-white mb-3">Recursos</h4>
+                <ul className="space-y-2 text-slate-400">
+                  <li>Dashboard Completo</li>
+                  <li>Relatórios Detalhados</li>
+                  <li>Metas Financeiras</li>
+                  <li>Alertas Inteligentes</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-white mb-3">Suporte</h4>
+                <ul className="space-y-2 text-slate-400">
+                  <li>Central de Ajuda</li>
+                  <li>Contato 24/7</li>
+                  <li>Tutoriais</li>
+                  <li>FAQ</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-white mb-3">Empresa</h4>
+                <ul className="space-y-2 text-slate-400">
+                  <li>Sobre Nós</li>
+                  <li>Blog</li>
+                  <li>Carreiras</li>
+                  <li>Privacidade</li>
+                </ul>
+              </div>
+            </motion.div>
+            <motion.p 
+              initial={{ y: 20, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 1.0 }}
+              className="text-sm text-slate-500 border-t border-slate-700 pt-6"
+            >
+              © 2025 Controle Financeiro by Guilherme Cirelli. Todos os direitos reservados.
             </motion.p>
           </motion.div>
         </div>

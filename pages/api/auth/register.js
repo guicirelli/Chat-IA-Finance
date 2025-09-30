@@ -123,6 +123,7 @@ export default async function handler(req, res) {
           // Criar novo usuário no banco
           const user = new User({
             username: username || undefined,
+            name: username || email.split('@')[0], // Usar username como nome, ou parte do email se não tiver username
             email,
             phone: phone || undefined,
             password,
@@ -133,6 +134,7 @@ export default async function handler(req, res) {
           // Retornar dados do usuário (sem a senha)
           const userData = {
             id: user._id,
+            name: user.name,
             username: user.username,
             email: user.email,
             phone: user.phone,
@@ -155,6 +157,7 @@ export default async function handler(req, res) {
           const userId = Date.now().toString();
           const userData = {
             id: userId,
+            name: username || email.split('@')[0],
             username: username || '',
             email,
             phone: phone || '',

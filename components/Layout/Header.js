@@ -10,7 +10,8 @@ export default function Header() {
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isEditingNickname, setIsEditingNickname] = useState(false);
-  const [nickname, setNickname] = useState(session?.user?.name || 'Usuário');
+  const [nickname, setNickname] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef(null);
 
   // Fechar dropdown quando clicar fora
@@ -24,34 +25,91 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Atualizar nickname quando o usuário mudar
+  // Inicializar nickname quando a sessão estiver disponível
   useEffect(() => {
-    if (session?.user?.name) {
+    if (session?.user?.name && !nickname) {
       setNickname(session.user.name);
     }
-  }, [session?.user?.name]);
+  }, [session?.user?.name, nickname]);
+
+  // Buscar dados do perfil do usuário
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!session?.user?.id) return;
+      
+      console.log('Buscando perfil do usuário:', session.user);
+      
+      try {
+        const response = await fetch('/api/user/profile');
+        if (response.ok) {
+          const userData = await response.json();
+          console.log('Dados do perfil recebidos:', userData);
+          setNickname(userData.name || session.user.name || 'Usuário');
+        } else {
+          console.error('Erro na resposta da API:', response.status);
+          setNickname(session?.user?.name || 'Usuário');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar perfil do usuário:', error);
+        setNickname(session?.user?.name || 'Usuário');
+      }
+    };
+
+    fetchUserProfile();
+  }, [session?.user?.id, session?.user?.name]);
 
   const handleNicknameSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implementar atualização do nickname via Clerk
-    setIsEditingNickname(false);
+    if (!nickname.trim()) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: nickname.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setNickname(result.user.name);
+        setIsEditingNickname(false);
+      } else {
+        const error = await response.json();
+        alert('Erro ao atualizar nome: ' + error.error);
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar nome:', error);
+      alert('Erro ao atualizar nome. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 fixed top-0 right-0 left-0 z-20">
+    <header className="h-16 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm fixed top-0 right-0 left-0 z-20">
       <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-4 lg:px-6">
             {/* Logo/Title */}
             <div className="flex-1 flex items-center space-x-3">
-              <Image
-                src="/images/robo-logo.png"
-                alt="Logo"
-                width={28}
-                height={28}
-                className="w-7 h-7 rounded-full"
-              />
-              <h1 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Controle Financeiro
-              </h1>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200"
+              >
+                <Image
+                  src="/images/robo-logo.png"
+                  alt="Logo"
+                  width={28}
+                  height={28}
+                  className="w-7 h-7 rounded-full"
+                />
+                <h1 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Controle Financeiro
+                </h1>
+              </button>
             </div>
 
         {/* User Profile */}
@@ -110,9 +168,10 @@ export default function Header() {
                         />
                         <button
                           type="submit"
-                          className="px-4 py-2 text-sm bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors shadow-sm"
+                          disabled={isLoading}
+                          className="px-4 py-2 text-sm bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Salvar
+                          {isLoading ? 'Salvando...' : 'Salvar'}
                         </button>
                       </form>
                     ) : (

@@ -1,12 +1,14 @@
-import { getAuth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../../lib/auth";
 import { connectToDatabase } from "../../../lib/db";
 import Profile from "../../../models/Profile";
 
 export default async function handler(req, res) {
-  const { userId } = getAuth(req);
-  if (!userId) {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
     return res.status(401).json({ error: "Não autorizado" });
   }
+  const userId = session.user.id;
 
   const { id } = req.query;
   await connectToDatabase();

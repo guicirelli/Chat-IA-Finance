@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../../lib/authOptions";
+import { authOptions } from "../../../lib/auth";
 import { connectToDatabase } from "../../../lib/db";
 import Transaction from "../../../models/Transaction";
 

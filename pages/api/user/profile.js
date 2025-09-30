@@ -14,11 +14,14 @@ export default async function handler(req, res) {
 
     if (req.method === "GET") {
       // Retornar dados do perfil atual
-      return res.status(200).json({
+      console.log('API Profile GET - Session user:', session.user);
+      const userData = {
         name: session.user.name,
         email: session.user.email,
         image: session.user.image || '',
-      });
+      };
+      console.log('API Profile GET - Retornando:', userData);
+      return res.status(200).json(userData);
     }
 
     if (req.method === "PATCH") {
