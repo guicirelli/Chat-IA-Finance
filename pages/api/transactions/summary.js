@@ -1,8 +1,16 @@
-// API simplificada para teste - sem autenticação
+import { getAuth } from "@clerk/nextjs/server";
+
 export default async function handler(req, res) {
   try {
     if (req.method !== "GET") {
       return res.status(405).json({ error: "Método não permitido" });
+    }
+
+    // Verificar autenticação com Clerk
+    const { userId } = getAuth(req);
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Não autorizado" });
     }
 
     // Inicializar estrutura global separada por período se não existir
@@ -10,21 +18,14 @@ export default async function handler(req, res) {
       global.tempTransactionsByPeriod = {};
     }
 
-    // ID temporário para teste
-    const userId = 'temp-user';
-    const activeProfile = { _id: 'temp-profile', userId };
-
     try {
       const { month = new Date().getMonth(), year = new Date().getFullYear() } = req.query;
 
-      // Criar chave única para o período (mês/ano)
-      const periodKey = `${year}-${month}`;
+      // CORRIGIDO: Usar a mesma chave que em /api/transactions/index.js
+      const periodKey = `${userId}-${year}-${month}`;
       
       // Buscar transações específicas do período
-      const transactions = (global.tempTransactionsByPeriod[periodKey] || []).filter(t => 
-        t.userId === userId && 
-        t.profileId === activeProfile._id
-      );
+      const transactions = global.tempTransactionsByPeriod[periodKey] || [];
 
       console.log(`Calculando resumo para período ${periodKey}:`, transactions.length, 'transações encontradas');
       console.log('Períodos disponíveis:', Object.keys(global.tempTransactionsByPeriod));

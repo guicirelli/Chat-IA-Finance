@@ -57,18 +57,18 @@ export default function ExpensesColumnChart({ data }) {
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
-      ctx.font = '600 12px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.font = 'bold 13px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial';
       dataset.data.forEach((rawValue, index) => {
         const element = meta.data[index];
         if (!element) return;
         const { x, y } = element.tooltipPosition();
         const displayValue = `R$ ${Number(rawValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-        // contorno claro para contraste
-        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-        ctx.lineWidth = 3;
-        ctx.strokeText(displayValue, x, y - 8);
-        // texto escuro legível
-        ctx.fillStyle = '#111827';
+        // Apenas texto branco com sombra sutil para contraste
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 1;
+        ctx.fillStyle = '#ffffff';
         ctx.fillText(displayValue, x, y - 8);
       });
       ctx.restore();
@@ -80,16 +80,7 @@ export default function ExpensesColumnChart({ data }) {
     maintainAspectRatio: false,
     plugins: {
       title: {
-        display: true,
-        text: 'Despesas por Categoria',
-        font: {
-          size: 20,
-          weight: 'bold',
-          family: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial'
-        },
-        color: '#111827',
-        padding: 16,
-        align: 'center'
+        display: false
       },
       legend: {
         display: false

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/router';
 import MainLayout from '../components/Layout/MainLayout';
 import { motion } from 'framer-motion';
 import { 
@@ -16,6 +18,8 @@ import {
 import AddTransactionModal from '../components/Dashboard/AddTransactionModal';
 
 export default function TransactionsPage() {
+  const { isLoaded, isSignedIn } = useUser();
+  const router = useRouter();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,6 +31,13 @@ export default function TransactionsPage() {
     category: '',
     search: ''
   });
+
+  // 🔒 PROTEÇÃO: Redirecionar se não autenticado
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.push('/');
+    }
+  }, [isLoaded, isSignedIn, router]);
 
   // Buscar transações
   const fetchTransactions = async () => {

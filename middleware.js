@@ -1,14 +1,16 @@
-import { clerkMiddleware } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-export default clerkMiddleware({
-  publicRoutes: [
-    '/',
-    '/auth/signin',
-    '/auth/signup',
-    '/api/auth/(.*)',
-    '/api/transactions/test'
-  ]
-});
+// 🔒 Definir rotas públicas (acessíveis sem autenticação)
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/auth/signin',
+  '/auth/signup',
+  '/api/auth/(.*)',
+  '/sign-in(.*)',
+  '/sign-up(.*)'
+]);
+
+export default clerkMiddleware();
 
 export const config = {
   matcher: [
@@ -17,4 +19,12 @@ export const config = {
     // Always run for API routes
     "/(api|trpc)(.*)",
   ],
+  publicRoutes: [
+    '/',
+    '/auth/signin',
+    '/auth/signup',
+    '/api/auth/(.*)',
+    '/sign-in(.*)',
+    '/sign-up(.*)'
+  ]
 };

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/router';
 import MainLayout from '../components/Layout/MainLayout';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, DollarSign, Calendar } from 'lucide-react';
@@ -6,11 +8,20 @@ import ExpensesPieChart from '../components/Dashboard/ExpensesPieChart';
 import MonthlyLineChart from '../components/Dashboard/MonthlyLineChart';
 
 export default function AnalyticsPage() {
+  const { isLoaded, isSignedIn } = useUser();
+  const router = useRouter();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [timeRange, setTimeRange] = useState('monthly'); // monthly, yearly
+
+  // 🔒 PROTEÇÃO: Redirecionar se não autenticado
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.push('/');
+    }
+  }, [isLoaded, isSignedIn, router]);
 
   // Buscar dados de análise
   const fetchAnalytics = async () => {

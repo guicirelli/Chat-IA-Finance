@@ -57,20 +57,9 @@ export default async function handler(req, res) {
             .filter(t => t.type === 'expense')
             .reduce((sum, t) => sum + t.amount, 0);
 
-          return res.status(200).json({
-            transactions: paginatedTransactions,
-            pagination: {
-              currentPage: parseInt(page),
-              totalPages: Math.ceil(totalTransactions / limit),
-              totalItems: totalTransactions,
-              itemsPerPage: parseInt(limit)
-            },
-            summary: {
-              totalIncome,
-              totalExpenses,
-              balance: totalIncome - totalExpenses
-            }
-          });
+          console.log(`GET /api/transactions - periodKey: ${periodKey}, total encontrado: ${transactions.length}`);
+          
+          return res.status(200).json(paginatedTransactions);
         } catch (error) {
           console.error("Erro ao buscar transações:", error);
           return res.status(500).json({ error: "Erro interno do servidor" });
@@ -135,15 +124,18 @@ export default async function handler(req, res) {
             updatedAt: new Date().toISOString()
           };
 
-          console.log('Criando nova transação:', newTransaction);
+          console.log('✅ Criando nova transação:', newTransaction);
+          console.log('📍 PeriodKey:', periodKey);
 
           global.tempTransactionsByPeriod[periodKey].push(newTransaction);
 
-          console.log('Transações após adicionar:', global.tempTransactionsByPeriod[periodKey]);
+          console.log('✅ Transação salva! Total no período:', global.tempTransactionsByPeriod[periodKey].length);
+          console.log('📊 Todas as transações do período:', global.tempTransactionsByPeriod[periodKey]);
 
           return res.status(201).json({
             message: "Transação criada com sucesso",
-            transaction: newTransaction
+            transaction: newTransaction,
+            periodKey: periodKey
           });
         } catch (error) {
           console.error("Erro ao criar transação:", error);

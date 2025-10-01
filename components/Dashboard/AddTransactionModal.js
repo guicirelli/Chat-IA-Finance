@@ -140,10 +140,16 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
       }
 
       const responseData = await response.json();
-      console.log('Dados da resposta:', responseData);
-      console.log('Transação adicionada com sucesso, chamando onTransactionAdded...');
-      onTransactionAdded();
+      console.log('✅ Transação salva com sucesso:', responseData);
+      
+      // Fechar modal primeiro
       onClose();
+      
+      // Aguardar um momento e depois atualizar
+      setTimeout(() => {
+        console.log('🔄 Chamando callback de atualização...');
+        onTransactionAdded();
+      }, 200);
     } catch (error) {
       console.error('Erro ao adicionar transação:', error);
       setError(`Erro: ${error.message}`);
@@ -180,42 +186,39 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
             initial={{ y: -50, opacity: 0, scale: 0.95 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -50, opacity: 0, scale: 0.95 }}
-            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700"
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
-              <div className="flex items-center space-x-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center space-x-2">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                   formData.type === 'income' 
                     ? 'bg-green-100 dark:bg-green-900/30' 
                     : 'bg-red-100 dark:bg-red-900/30'
                 }`}>
                   {formData.type === 'income' ? (
-                    <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
                   ) : (
-                    <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
                   )}
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                     {formData.type === 'income' ? 'Adicionar Receita' : 'Adicionar Despesa'}
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {formData.type === 'income' ? 'Registre uma nova entrada' : 'Registre um novo gasto'}
-                  </p>
                 </div>
               </div>
               <button 
                 onClick={onClose}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                <X className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               </button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-4 space-y-4">
               {error && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
@@ -227,18 +230,18 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
               )}
 
               {/* Valor */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
                   Valor (R$)
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <DollarSign className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="number"
                     name="amount"
                     value={formData.amount}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-4 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-lg font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full pl-9 pr-3 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     placeholder="0,00"
                     step="0.01"
                     min="0"
@@ -248,18 +251,18 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
               </div>
 
               {/* Categoria e Data em linha */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
                     Categoria
                   </label>
                   <div className="relative">
-                    <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Tag className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <select
                       name="category"
                       value={formData.category}
                       onChange={handleInputChange}
-                      className="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none"
+                      className="w-full pl-9 pr-3 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm appearance-none"
                       required
                     >
                       {categories[formData.type].map((cat) => (
@@ -269,18 +272,18 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
                     Data
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Calendar className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="date"
                       name="date"
                       value={formData.date}
                       onChange={handleInputChange}
-                      className="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full pl-9 pr-3 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                       required
                     />
                   </div>
@@ -288,40 +291,39 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
               </div>
 
               {/* Observação */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
                   Observação (opcional)
                 </label>
                 <textarea
                   name="note"
                   value={formData.note}
                   onChange={handleInputChange}
-                  rows="3"
-                  className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-                  placeholder="Ex: Aluguel do apartamento, Bônus de vendas..."
+                  rows="2"
+                  className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm"
+                  placeholder="Ex: Aluguel do apartamento..."
                 />
               </div>
 
-
               {/* Botões */}
-              <div className="flex space-x-3 pt-4">
+              <div className="flex space-x-2 pt-2">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 px-4 py-3 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium"
+                  className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium text-sm"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`flex-1 px-4 py-3 rounded-xl text-white font-medium transition-colors ${
+                  className={`flex-1 px-4 py-2.5 rounded-lg text-white font-medium transition-colors text-sm ${
                     formData.type === 'income'
                       ? 'bg-green-600 hover:bg-green-700 disabled:bg-green-400'
                       : 'bg-red-600 hover:bg-red-700 disabled:bg-red-400'
                   }`}
                 >
-                  {loading ? 'Salvando...' : (formData.type === 'income' ? 'Adicionar Receita' : 'Adicionar Despesa')}
+                  {loading ? 'Salvando...' : 'Adicionar'}
                 </button>
               </div>
             </form>

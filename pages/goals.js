@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/router';
 import MainLayout from '../components/Layout/MainLayout';
 import { motion } from 'framer-motion';
 import { 
@@ -13,10 +15,19 @@ import {
 } from 'lucide-react';
 
 export default function GoalsPage() {
+  const { isLoaded, isSignedIn } = useUser();
+  const router = useRouter();
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
+
+  // 🔒 PROTEÇÃO: Redirecionar se não autenticado
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.push('/');
+    }
+  }, [isLoaded, isSignedIn, router]);
 
   // Buscar metas
   const fetchGoals = async () => {

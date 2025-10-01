@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/router';
 import MainLayout from '../components/Layout/MainLayout';
 import { motion } from 'framer-motion';
 import { 
@@ -15,6 +17,8 @@ import AddTransactionModal from '../components/Dashboard/AddTransactionModal';
 import TransactionDetails from '../components/Dashboard/TransactionDetails';
 
 export default function DashboardPage() {
+  const { isLoaded, isSignedIn } = useUser();
+  const router = useRouter();
   const [summary, setSummary] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +36,14 @@ export default function DashboardPage() {
     expense: false
   });
 
+  // 🔒 PROTEÇÃO: Redirecionar se não autenticado
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      console.log('🚫 Acesso negado - Redirecionando para login...');
+      router.push('/');
+    }
+  }, [isLoaded, isSignedIn, router]);
+
   // Verificar se é o mês atual
   useEffect(() => {
     const currentDate = new Date();
@@ -43,8 +55,14 @@ export default function DashboardPage() {
 
   // Buscar dados do mês selecionado
   useEffect(() => {
+    // ⏳ Aguardar autenticação antes de buscar dados
+    if (!isLoaded || !isSignedIn) {
+      return;
+    }
+
     const fetchData = async () => {
       try {
+        console.log('📊 Carregando inicial - mês:', selectedMonth, 'ano:', selectedYear);
         const [summaryResponse, transactionsResponse] = await Promise.all([
           fetch(`/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}`),
           fetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}`)
@@ -55,51 +73,67 @@ export default function DashboardPage() {
           transactionsResponse.json()
         ]);
 
+        console.log('📊 Dados carregados:', {
+          summary: summaryData,
+          transactions: transactionsData,
+          total: transactionsData?.length || 0
+        });
+
         setSummary(summaryData);
         setTransactions(transactionsData);
       } catch (error) {
-        console.error('Erro ao buscar dados:', error);
+        console.error('❌ Erro ao buscar dados:', error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, isLoaded, isSignedIn]);
 
   const refreshData = async () => {
     try {
-      console.log('Buscando dados atualizados para mês:', selectedMonth, 'ano:', selectedYear);
+      console.log('🔍 Buscando dados atualizados para mês:', selectedMonth, 'ano:', selectedYear);
       const [summaryResponse, transactionsResponse] = await Promise.all([
         fetch(`/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}`),
         fetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}`)
       ]);
+
+      if (!summaryResponse.ok || !transactionsResponse.ok) {
+        console.error('❌ Erro nas respostas:', {
+          summary: summaryResponse.status,
+          transactions: transactionsResponse.status
+        });
+        return;
+      }
 
       const [summaryData, transactionsData] = await Promise.all([
         summaryResponse.json(),
         transactionsResponse.json()
       ]);
 
-      console.log('Dados recebidos:', { summaryData, transactionsData });
+      console.log('✅ Dados recebidos:', { 
+        summaryData, 
+        transactionsData,
+        totalTransactions: transactionsData?.length || 0
+      });
+      
       setSummary(summaryData);
       setTransactions(transactionsData);
     } catch (error) {
-      console.error('Erro ao buscar dados:', error);
+      console.error('❌ Erro ao buscar dados:', error);
     }
   };
 
   const handleTransactionAdded = () => {
-    console.log('Transação adicionada, atualizando dados...');
+    console.log('✅ Transação adicionada, atualizando dados...');
     setHasUnsavedChanges(true);
     
-    // Refresh imediato e depois novamente para garantir
-    refreshData();
-    
-    // Aguardar um pouco e fazer refresh novamente para garantir que a transação foi salva
+    // Aguardar um momento para garantir que a API salvou
     setTimeout(() => {
-      console.log('Executando refreshData novamente...');
+      console.log('🔄 Executando refresh dos dados...');
       refreshData();
-    }, 1000);
+    }, 300);
   };
 
   const handleTransactionDeleted = () => {
@@ -130,6 +164,18 @@ export default function DashboardPage() {
     }));
   };
 
+  // 🔒 Tela de carregamento durante verificação de autenticação
+  if (!isLoaded || !isSignedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white mx-auto"></div>
+          <p className="text-white text-lg font-medium">Verificando autenticação...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <MainLayout>
@@ -148,154 +194,43 @@ export default function DashboardPage() {
   };
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-            {/* Cabeçalho */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-                  Dashboard
-                </h1>
-
-                {/* Seletor de Mês/Ano integrado */}
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2">
-                    <select
-                      value={selectedMonth}
-                      onChange={(e) => {
-                        if (isEditing) {
-                          alert('Salve as alterações antes de mudar o mês.');
-                          return;
-                        }
-                        setSelectedMonth(Number(e.target.value));
-                      }}
-                      disabled={isEditing}
-                      className={`px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium ${
-                        isEditing 
-                          ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-50' 
-                          : 'bg-white dark:bg-slate-800'
-                      }`}
-                    >
-                      {Array.from({ length: 12 }, (_, i) => (
-                        <option key={i} value={i}>
-                          {new Date(2024, i).toLocaleString('pt-BR', { month: 'long' })}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <select
-                      value={selectedYear}
-                      onChange={(e) => {
-                        if (isEditing) {
-                          alert('Salve as alterações antes de mudar o ano.');
-                          return;
-                        }
-                        setSelectedYear(Number(e.target.value));
-                      }}
-                      disabled={isEditing}
-                      className={`px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium ${
-                        isEditing 
-                          ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-50' 
-                          : 'bg-white dark:bg-slate-800'
-                      }`}
-                    >
-                      <option value={2024}>2024</option>
-                      <option value={2025}>2025</option>
-                    </select>
-                  </div>
-
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-4">
-
-            {/* Botões de Ação - só aparecem no modo de edição */}
-            {isEditMode && (
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => openModal('income')}
-                  className="group flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg hover:shadow-green-500/25 active:scale-95"
-                >
-                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                    <TrendingUp className="w-5 h-5" />
-                  </div>
-                  <div className="text-left">
-                    <div className="font-semibold">Receita</div>
-                    <div className="text-xs opacity-90">Adicionar entrada</div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => openModal('expense')}
-                  className="group flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg hover:shadow-red-500/25 active:scale-95"
-                >
-                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                    <TrendingDown className="w-5 h-5" />
-                  </div>
-                  <div className="text-left">
-                    <div className="font-semibold">Despesa</div>
-                    <div className="text-xs opacity-90">Registrar gasto</div>
-                  </div>
-                </button>
-                
-                {/* Botão Salvar - sempre aparece no modo de edição */}
-                <button
-                  onClick={handleSave}
-                  className="flex items-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg hover:shadow-indigo-500/25 active:scale-95"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="font-semibold">Salvar</span>
-                </button>
-              </div>
-            )}
-
-            {/* Botão Editar - só aparece quando não está editando */}
-            {!isEditMode && (
-              <button
-                onClick={() => {
-                  setIsEditMode(true);
-                  setIsEditing(true);
-                }}
-                className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                <span>Editar</span>
-              </button>
-            )}
-          </div>
-            </div>
-
-
-
+    <MainLayout
+      selectedMonth={selectedMonth}
+      selectedYear={selectedYear}
+      setSelectedMonth={setSelectedMonth}
+      setSelectedYear={setSelectedYear}
+      isEditMode={isEditMode}
+      setIsEditMode={setIsEditMode}
+      isEditing={isEditing}
+      setIsEditing={setIsEditing}
+      handleSave={handleSave}
+      openModal={openModal}
+    >
+      <div className="space-y-4 sm:space-y-6 p-3 sm:p-6">
         {/* Gráfico e Cards lado a lado */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Gráfico de Pizza */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700"
+            className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/30"
           >
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">
                   Receitas vs Despesas
                 </h2>
-            <div className="h-[400px]">
+            <div className="h-[300px] sm:h-[400px]">
               <ExpensesPieChart data={summary} />
                 </div>
           </motion.div>
 
           {/* Cards de Resumo com Detalhes */}
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6">
           {/* Receitas */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700"
+            className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/30"
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
@@ -352,7 +287,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-            className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700"
+            className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/30"
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
@@ -411,9 +346,12 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700"
+          className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/30"
         >
-          <div className="h-[400px]">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">
+            Despesas por Categoria
+          </h2>
+          <div className="h-[300px] sm:h-[400px]">
             <ExpensesColumnChart data={summary} />
           </div>
         </motion.div>
