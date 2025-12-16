@@ -44,9 +44,9 @@ export default function AnalyticsPage() {
   }, [selectedMonth, selectedYear]);
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'BRL'
+      currency: 'USD'
     }).format(value || 0);
   };
 
@@ -66,23 +66,23 @@ export default function AnalyticsPage() {
         {/* Cabeçalho */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-            Análises
+            Analytics
           </h1>
           
           <div className="flex items-center space-x-4">
-            {/* Seletor de Período */}
+            {/* Period Selector */}
             <div className="flex items-center space-x-2">
               <select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
                 className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
               >
-                <option value="monthly">Mensal</option>
-                <option value="yearly">Anual</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
               </select>
             </div>
 
-            {/* Seletor de Mês/Ano */}
+            {/* Month/Year Selector */}
             <div className="flex items-center space-x-2">
               <select
                 value={selectedMonth}
@@ -91,7 +91,7 @@ export default function AnalyticsPage() {
               >
                 {Array.from({ length: 12 }, (_, i) => (
                   <option key={i} value={i}>
-                    {new Date(2024, i).toLocaleString('pt-BR', { month: 'long' })}
+                    {new Date(2024, i).toLocaleString('en-US', { month: 'long' })}
                   </option>
                 ))}
               </select>
@@ -122,7 +122,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <div className="mt-4">
-              <p className="text-sm text-slate-600 dark:text-slate-400">Receitas</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Income</p>
               <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                 {formatCurrency(summary?.totalIncome)}
               </p>
@@ -142,7 +142,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <div className="mt-4">
-              <p className="text-sm text-slate-600 dark:text-slate-400">Despesas</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Expenses</p>
               <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                 {formatCurrency(summary?.totalExpenses)}
               </p>
@@ -160,7 +160,7 @@ export default function AnalyticsPage() {
               <DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="mt-4">
-              <p className="text-sm text-slate-600 dark:text-slate-400">Saldo</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Balance</p>
               <p className={`text-2xl font-semibold ${
                 (summary?.balance || 0) >= 0 
                   ? 'text-green-600 dark:text-green-400' 
@@ -182,7 +182,7 @@ export default function AnalyticsPage() {
               <Calendar className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div className="mt-4">
-              <p className="text-sm text-slate-600 dark:text-slate-400">Economia</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Savings</p>
               <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                 {summary?.savingsRatio?.toFixed(1 || 0)}%
               </p>
@@ -200,7 +200,7 @@ export default function AnalyticsPage() {
             className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700"
           >
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-              Distribuição de Gastos
+              Expense Distribution
             </h2>
             <div className="h-[300px]">
               <ExpensesPieChart data={summary} />
@@ -215,7 +215,7 @@ export default function AnalyticsPage() {
             className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700"
           >
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-              Evolução Mensal
+              Monthly Evolution
             </h2>
             <div className="h-[300px]">
               <MonthlyLineChart data={summary} />
@@ -231,14 +231,14 @@ export default function AnalyticsPage() {
           className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700"
         >
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            Análise Detalhada
+            Detailed Analysis
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Top Categorias de Despesas */}
+            {/* Top Expense Categories */}
             <div>
               <h3 className="text-md font-medium text-slate-900 dark:text-white mb-3">
-                Top Categorias de Despesas
+                Top Expense Categories
               </h3>
               <div className="space-y-2">
                 {Object.entries(summary?.expenseCategories || {})
@@ -269,20 +269,20 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* Resumo do Mês */}
+            {/* Month Summary */}
             <div>
               <h3 className="text-md font-medium text-slate-900 dark:text-white mb-3">
-                Resumo do Mês
+                Month Summary
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <span className="text-sm font-medium text-green-700 dark:text-green-300">Receitas</span>
+                  <span className="text-sm font-medium text-green-700 dark:text-green-300">Income</span>
                   <span className="text-sm font-bold text-green-700 dark:text-green-300">
                     {formatCurrency(summary?.totalIncome)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                  <span className="text-sm font-medium text-red-700 dark:text-red-300">Despesas</span>
+                  <span className="text-sm font-medium text-red-700 dark:text-red-300">Expenses</span>
                   <span className="text-sm font-bold text-red-700 dark:text-red-300">
                     {formatCurrency(summary?.totalExpenses)}
                   </span>
@@ -297,7 +297,7 @@ export default function AnalyticsPage() {
                       ? 'text-blue-700 dark:text-blue-300' 
                       : 'text-red-700 dark:text-red-300'
                   }`}>
-                    Saldo Final
+                    Final Balance
                   </span>
                   <span className={`text-sm font-bold ${
                     (summary?.balance || 0) >= 0 

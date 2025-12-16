@@ -6,8 +6,8 @@ export default function Message({ role, content, timestamp }) {
         {/* Avatar */}
         <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
           isUser 
-            ? "bg-gradient-to-r from-blue-600 to-purple-600" 
-            : "bg-gradient-to-r from-gray-100 to-gray-200"
+            ? "bg-blue-600" 
+            : "bg-gray-100"
         }`}>
           {isUser ? (
             <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -24,7 +24,7 @@ export default function Message({ role, content, timestamp }) {
         <div
           className={`rounded-2xl px-4 py-3 text-sm shadow-lg ${
             isUser 
-              ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white" 
+              ? "bg-blue-600 text-white" 
               : "bg-white text-gray-900 border border-gray-200"
           }`}
           title={timestamp ? new Date(timestamp).toLocaleString() : undefined}

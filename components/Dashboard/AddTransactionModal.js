@@ -16,31 +16,31 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
 
   const categories = {
     income: [
-      'Salário',
-      'Bônus',
+      'Salary',
+      'Bonus',
       'Freelance',
-      'Investimentos',
-      'Vendas',
-      'Outros'
+      'Investments',
+      'Sales',
+      'Other'
     ],
     expense: [
-      'Aluguel',
-      'Água',
-      'Luz',
-      'Gás',
+      'Rent',
+      'Water',
+      'Electricity',
+      'Gas',
       'Internet',
       'Streaming',
-      'Celular',
-      'Telefone',
-      'Transporte',
-      'Curso',
-      'Faculdade',
-      'Plano de Saúde',
-      'Assinaturas',
-      'Lazer',
-      'Presentes',
+      'Mobile',
+      'Phone',
+      'Transport',
+      'Course',
+      'College',
+      'Health Plan',
+      'Subscriptions',
+      'Leisure',
+      'Gifts',
       'Pet',
-      'Alimentação'
+      'Food'
     ]
   };
 
@@ -205,7 +205,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {formData.type === 'income' ? 'Adicionar Receita' : 'Adicionar Despesa'}
+                    {formData.type === 'income' ? 'Add Income' : 'Add Expense'}
                   </h2>
                 </div>
               </div>
@@ -232,7 +232,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
               {/* Valor */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  Valor (R$)
+                  Value ($)
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -254,7 +254,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    Categoria
+                    Category
                   </label>
                   <div className="relative">
                     <Tag className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -274,7 +274,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
 
                 <div className="space-y-1.5">
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    Data
+                    Date
                   </label>
                   <div className="relative">
                     <Calendar className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -293,7 +293,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
               {/* Observação */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  Observação (opcional)
+                  Note (optional)
                 </label>
                 <textarea
                   name="note"
@@ -301,7 +301,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
                   onChange={handleInputChange}
                   rows="2"
                   className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm"
-                  placeholder="Ex: Aluguel do apartamento..."
+                  placeholder="Ex: Apartment rent..."
                 />
               </div>
 
@@ -312,7 +312,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
                   onClick={onClose}
                   className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium text-sm"
                 >
-                  Cancelar
+                  Cancel
                 </button>
                 <button
                   type="submit"
@@ -323,7 +323,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
                       : 'bg-red-600 hover:bg-red-700 disabled:bg-red-400'
                   }`}
                 >
-                  {loading ? 'Salvando...' : 'Adicionar'}
+                  {loading ? 'Saving...' : 'Add'}
                 </button>
               </div>
             </form>

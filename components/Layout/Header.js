@@ -70,7 +70,7 @@ export default function Header({
             height={28}
             className="w-6 h-6 sm:w-7 sm:h-7 rounded-full"
           />
-          <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">
+          <h1 className="text-base sm:text-xl font-bold text-blue-600 whitespace-nowrap">
             Controle Financeiro Cirelli
           </h1>
         </button>
@@ -82,7 +82,7 @@ export default function Header({
               value={selectedMonth}
               onChange={(e) => {
                 if (isEditing) {
-                  alert('Salve as alterações antes de mudar o mês.');
+                  alert('Save changes before changing the month.');
                   return;
                 }
                 setSelectedMonth(Number(e.target.value));
@@ -94,7 +94,7 @@ export default function Header({
             >
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i} value={i}>
-                  {new Date(2024, i).toLocaleString('pt-BR', { month: 'short' })}
+                  {new Date(2024, i).toLocaleString('en-US', { month: 'short' })}
                 </option>
               ))}
             </select>
@@ -103,7 +103,7 @@ export default function Header({
               value={selectedYear}
               onChange={(e) => {
                 if (isEditing) {
-                  alert('Salve as alterações antes de mudar o ano.');
+                  alert('Save changes before changing the year.');
                   return;
                 }
                 setSelectedYear(Number(e.target.value));
@@ -123,31 +123,31 @@ export default function Header({
                   setIsEditMode(true);
                   setIsEditing(true);
                 }}
-                className="px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium text-xs sm:text-sm shadow-lg whitespace-nowrap"
+                className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-medium text-xs sm:text-sm shadow-lg whitespace-nowrap"
               >
-                Editar
+                Edit
               </button>
             ) : (
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   onClick={() => openModal('income')}
-                  className="px-2 sm:px-3 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all font-medium text-xs sm:text-sm shadow-lg flex items-center gap-1"
+                  className="px-2 sm:px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium text-xs sm:text-sm shadow-lg flex items-center gap-1"
                 >
                   <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden md:inline">Receita</span>
+                  <span className="hidden md:inline">Income</span>
                 </button>
                 <button
                   onClick={() => openModal('expense')}
-                  className="px-2 sm:px-3 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:from-red-700 hover:to-rose-700 transition-all font-medium text-xs sm:text-sm shadow-lg flex items-center gap-1"
+                  className="px-2 sm:px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium text-xs sm:text-sm shadow-lg flex items-center gap-1"
                 >
                   <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden md:inline">Despesa</span>
+                  <span className="hidden md:inline">Expense</span>
                 </button>
                 <button
                   onClick={handleSave}
-                  className="px-3 sm:px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all font-medium text-xs sm:text-sm shadow-lg whitespace-nowrap"
+                  className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all font-medium text-xs sm:text-sm shadow-lg whitespace-nowrap"
                 >
-                  Salvar
+                  Save
                 </button>
               </div>
             )}
@@ -162,7 +162,7 @@ export default function Header({
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
             >
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-500 flex items-center justify-center">
                 {user.imageUrl || user.profileImageUrl ? (
                   <img 
                     src={user.imageUrl || user.profileImageUrl} 
@@ -177,7 +177,7 @@ export default function Header({
               </div>
               <div className="hidden sm:block text-left">
                 <p className="text-sm font-medium text-slate-900 dark:text-slate-100 capitalize">
-                  {user.username || user.firstName || 'Usuário'}
+                  {user.username || user.firstName || 'User'}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {user.emailAddresses[0]?.emailAddress}
@@ -197,7 +197,7 @@ export default function Header({
                 >
                   <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100 capitalize">
-                      {user.username || user.firstName || 'Usuário'}
+                      {user.username || user.firstName || 'User'}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       {user.emailAddresses[0]?.emailAddress}
@@ -210,7 +210,7 @@ export default function Header({
                       className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                     >
                       <User className="w-4 h-4" />
-                      <span>Perfil</span>
+                      <span>Profile</span>
                     </button>
 
                     <button
@@ -218,7 +218,7 @@ export default function Header({
                       className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                     >
                       <Bell className="w-4 h-4" />
-                      <span>Relatórios</span>
+                      <span>Reports</span>
                     </button>
 
                     <div className="border-t border-slate-200 dark:border-slate-700 my-2"></div>
@@ -228,7 +228,7 @@ export default function Header({
                       className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
-                      <span>Sair</span>
+                      <span>Sign Out</span>
                     </button>
                   </div>
                 </motion.div>
@@ -238,7 +238,7 @@ export default function Header({
         ) : (
             <button
               onClick={() => router.push('/')}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium"
             >
               Entrar
             </button>

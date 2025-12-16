@@ -40,8 +40,23 @@ export function addIncome({ amount, source = "Salário", date = new Date().toISO
 export function calculateTotalsByCategory(transactions) {
   const byCategory = {};
   for (const tx of transactions) {
-    if (tx.type !== "expense") continue;
-    byCategory[tx.category] = (byCategory[tx.category] || 0) + Number(tx.amount || 0);
+    // Normalizar tipo
+    const type = String(tx.type || '').toLowerCase().trim();
+    if (type !== "expense" && type !== "despesa" && type !== "despesas") continue;
+    
+    // Normalizar e validar valor
+    let amount = 0;
+    if (typeof tx.amount === 'number' && Number.isFinite(tx.amount)) {
+      amount = Math.abs(tx.amount);
+    } else if (typeof tx.amount === 'string') {
+      const parsed = parseFloat(tx.amount.replace(/[^\d.,-]/g, '').replace(',', '.'));
+      amount = Number.isFinite(parsed) ? Math.abs(parsed) : 0;
+    }
+    
+    if (amount === 0) continue; // Ignorar valores zero
+    
+    const category = String(tx.category || 'Outros').trim();
+    byCategory[category] = (byCategory[category] || 0) + amount;
   }
   return byCategory;
 }
@@ -69,10 +84,28 @@ export function generateChartData(transactions) {
 export function summarizeBudget(transactions) {
   let income = 0;
   let expenses = 0;
+  
   for (const tx of transactions) {
-    if (tx.type === "income") income += Number(tx.amount || 0);
-    if (tx.type === "expense") expenses += Number(tx.amount || 0);
+    // Normalizar tipo
+    const type = String(tx.type || '').toLowerCase().trim();
+    // Normalizar e validar valor
+    let amount = 0;
+    if (typeof tx.amount === 'number' && Number.isFinite(tx.amount)) {
+      amount = Math.abs(tx.amount);
+    } else if (typeof tx.amount === 'string') {
+      const parsed = parseFloat(tx.amount.replace(/[^\d.,-]/g, '').replace(',', '.'));
+      amount = Number.isFinite(parsed) ? Math.abs(parsed) : 0;
+    }
+    
+    if (amount === 0) continue; // Ignorar valores zero ou inválidos
+    
+    if (type === "income" || type === "receita" || type === "receitas") {
+      income += amount;
+    } else if (type === "expense" || type === "despesa" || type === "despesas") {
+      expenses += amount;
+    }
   }
+  
   const savings = income - expenses;
   const savingsRate = income > 0 ? (savings / income) : 0;
   return { income, expenses, savings, savingsRate };

@@ -10,16 +10,22 @@ import {
   X,
   Pencil
 } from 'lucide-react';
+import { normalizeType, normalizeAmount, getColorByType, filterByType, TRANSACTION_TYPES } from '../../utils/transactionHelpers';
 
 const formatCurrency = (value) => {
-  return new Intl.NumberFormat('pt-BR', {
+  const normalized = normalizeAmount(value);
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'BRL',
-  }).format(value);
+    currency: 'USD',
+  }).format(normalized);
 };
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('pt-BR');
+  try {
+    return new Date(date).toLocaleDateString('en-US');
+  } catch {
+    return 'Invalid date';
+  }
 };
 
 export default function TransactionDetails({ transactions, type, onDelete, isEditMode = false, onUpdated }) {
@@ -28,7 +34,11 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
   const [savingId, setSavingId] = useState(null);
   const [form, setForm] = useState({ amount: '', category: '', date: '' });
 
-  const filteredTransactions = transactions.filter(t => t.type === type);
+  // Filtrar usando função utilitária que normaliza tipos
+  const filteredTransactions = filterByType(transactions || [], type);
+  
+  // Obter cores baseadas no TIPO, não no valor
+  const colors = getColorByType(type);
 
   const handleDelete = async (transactionId) => {
     setDeletingId(transactionId);
@@ -70,41 +80,81 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
   const saveEdit = async (t) => {
     try {
       setSavingId(t._id);
+      // Normalizar e validar valores antes de enviar
+      const normalizedAmount = normalizeAmount(form.amount);
+      if (normalizedAmount === 0) {
+        alert('Value must be greater than zero');
+        setSavingId(null);
+        return;
+      }
+      
+      // Validate date
+      if (!form.date) {
+        alert('Date is required');
+        setSavingId(null);
+        return;
+      }
+      
       const payload = {
-        amount: Number(form.amount),
-        category: form.category,
+        amount: normalizedAmount,
+        category: String(form.category || 'Other').trim(),
         date: form.date
       };
+      
+      console.log('💾 Salvando edição:', { id: t._id, payload });
+      
       const res = await fetch(`/api/transactions/${t._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Falha ao salvar alterações');
+        throw new Error(err.error || 'Failed to save changes');
       }
-      if (typeof onUpdated === 'function') onUpdated();
+      
+      const result = await res.json();
+      console.log('✅ Edição salva com sucesso:', result);
+      
+      // Cancelar edição primeiro
       cancelEdit();
+      
+      // Aguardar um momento para garantir que a API processou
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      // Chamar callback de atualização para atualizar gráficos
+      if (typeof onUpdated === 'function') {
+        console.log('🔄 Chamando onUpdated para atualizar gráficos...');
+        onUpdated();
+      } else {
+        console.warn('⚠️ onUpdated não está definido!');
+      }
+      
     } catch (e) {
-      alert(e.message);
+      console.error('❌ Erro ao salvar edição:', e);
+      alert(e.message || 'Error saving changes');
     } finally {
       setSavingId(null);
     }
   };
 
+  // Normalizar tipo para comparação
+  const normalizedType = normalizeType(type);
+  const isIncome = normalizedType === TRANSACTION_TYPES.INCOME;
+  
   if (filteredTransactions.length === 0) {
     return (
       <div className="text-center py-4">
         <div className="text-gray-400 mb-2">
-          {type === 'income' ? (
+          {isIncome ? (
             <TrendingUp className="w-8 h-8 mx-auto" />
           ) : (
             <TrendingDown className="w-8 h-8 mx-auto" />
           )}
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Nenhuma {type === 'income' ? 'receita' : 'despesa'} registrada
+          No {isIncome ? 'income' : 'expense'} recorded
         </p>
       </div>
     );
@@ -120,9 +170,9 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className={`p-3 rounded-lg border transition-colors ${
-              type === 'income' 
-                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+              isIncome 
+                ? `${colors.dark.bg} ${colors.border} ${colors.dark.border}` 
+                : `${colors.dark.bg} ${colors.border} ${colors.dark.border}`
             }`}
           >
             <div className="flex items-center justify-between">
@@ -131,7 +181,7 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
                   <div className="space-y-2">
                     <div className="grid grid-cols-3 gap-2">
                       <div>
-                        <label className="block text-xs text-slate-500 mb-1">Valor (R$)</label>
+                        <label className="block text-xs text-slate-500 mb-1">Value ($)</label>
                         <input
                           type="number"
                           step="0.01"
@@ -142,7 +192,7 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-500 mb-1">Categoria</label>
+                        <label className="block text-xs text-slate-500 mb-1">Category</label>
                         <input
                           type="text"
                           value={form.category}
@@ -151,7 +201,7 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-500 mb-1">Data</label>
+                        <label className="block text-xs text-slate-500 mb-1">Date</label>
                         <input
                           type="date"
                           value={form.date}
@@ -164,11 +214,9 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
                 ) : (
                   <>
                     <div className="flex items-center space-x-2 mb-1">
-                      <div className={`w-2 h-2 rounded-full ${
-                        type === 'income' ? 'bg-green-500' : 'bg-red-500'
-                      }`} />
+                      <div className={`w-2 h-2 rounded-full ${colors.bg}`} />
                       <span className="font-medium text-sm text-gray-900 dark:text-white">
-                        {transaction.category}
+                        {String(transaction.category || 'Other').trim()}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300">
@@ -178,11 +226,7 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
                       </div>
                       <div className="flex items-center space-x-1">
                         <DollarSign className="w-3 h-3" />
-                        <span className={`font-medium ${
-                          type === 'income' 
-                            ? 'text-green-600 dark:text-green-400' 
-                            : 'text-red-600 dark:text-red-400'
-                        }`}>
+                        <span className={`font-medium ${colors.text} ${colors.dark.text}`}>
                           {formatCurrency(transaction.amount)}
                         </span>
                       </div>
@@ -198,7 +242,7 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
 
                 {transaction.isFixed && (
                   <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">
-                    Fixa
+                    Fixed
                   </span>
                 )}
               </div>
@@ -211,16 +255,16 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
                         onClick={() => saveEdit(transaction)}
                         disabled={savingId === transaction._id}
                         className="px-2 py-1 text-xs rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                        title="Salvar alterações"
+                        title="Save changes"
                       >
-                        {savingId === transaction._id ? 'Salvando...' : 'Salvar'}
+                        {savingId === transaction._id ? 'Saving...' : 'Save'}
                       </button>
                       <button
                         onClick={cancelEdit}
                         className="px-2 py-1 text-xs rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
-                        title="Cancelar"
+                        title="Cancel"
                       >
-                        Cancelar
+                        Cancel
                       </button>
                     </>
                   ) : (
@@ -228,8 +272,8 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
                       <button
                         onClick={() => startEdit(transaction)}
                         className="p-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
-                        title="Editar"
-                        aria-label="Editar"
+                        title="Edit"
+                        aria-label="Edit"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
@@ -237,8 +281,8 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
                         onClick={() => handleDelete(transaction._id)}
                         disabled={deletingId === transaction._id}
                         className="p-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-                        title="Excluir"
-                        aria-label="Excluir"
+                        title="Delete"
+                        aria-label="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

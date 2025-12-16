@@ -15,11 +15,18 @@ import ExpensesPieChart from '../components/Dashboard/ExpensesPieChart';
 import ExpensesColumnChart from '../components/Dashboard/ExpensesColumnChart';
 import AddTransactionModal from '../components/Dashboard/AddTransactionModal';
 import TransactionDetails from '../components/Dashboard/TransactionDetails';
+import { normalizeAmount } from '../utils/transactionHelpers';
 
 export default function DashboardPage() {
   const { isLoaded, isSignedIn } = useUser();
   const router = useRouter();
-  const [summary, setSummary] = useState(null);
+  const [summary, setSummary] = useState({
+    totalIncome: 0,
+    totalExpenses: 0,
+    balance: 0,
+    incomeCategories: {},
+    expenseCategories: {}
+  });
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -30,6 +37,7 @@ export default function DashboardPage() {
   const [isCurrentMonth, setIsCurrentMonth] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0); // Chave para forçar atualização dos gráficos
 
   const [expandedCards, setExpandedCards] = useState({
     income: false,
@@ -94,9 +102,12 @@ export default function DashboardPage() {
   const refreshData = async () => {
     try {
       console.log('🔍 Buscando dados atualizados para mês:', selectedMonth, 'ano:', selectedYear);
+      
+      // Adicionar timestamp para evitar cache
+      const timestamp = Date.now();
       const [summaryResponse, transactionsResponse] = await Promise.all([
-        fetch(`/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}`),
-        fetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}`)
+        fetch(`/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`),
+        fetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`)
       ]);
 
       if (!summaryResponse.ok || !transactionsResponse.ok) {
@@ -112,14 +123,26 @@ export default function DashboardPage() {
         transactionsResponse.json()
       ]);
 
-      console.log('✅ Dados recebidos:', { 
+      console.log('✅ Dados recebidos e atualizados:', { 
         summaryData, 
         transactionsData,
-        totalTransactions: transactionsData?.length || 0
+        totalTransactions: transactionsData?.length || 0,
+        totalIncome: summaryData?.totalIncome,
+        totalExpenses: summaryData?.totalExpenses
       });
       
+      // Atualizar estado - isso vai forçar re-renderização dos gráficos
       setSummary(summaryData);
       setTransactions(transactionsData);
+      
+      // Forçar atualização dos gráficos incrementando a chave
+      setRefreshKey(prev => prev + 1);
+      
+      // Forçar atualização do estado para garantir que os gráficos sejam atualizados
+      setHasUnsavedChanges(true);
+      
+      console.log('📊 Estado atualizado, gráficos devem ser re-renderizados');
+      
     } catch (error) {
       console.error('❌ Erro ao buscar dados:', error);
     }
@@ -137,11 +160,25 @@ export default function DashboardPage() {
   };
 
   const handleTransactionDeleted = () => {
-    console.log('Transação excluída, atualizando dados...');
+    console.log('🗑️ Transação excluída, atualizando dados...');
     setHasUnsavedChanges(true);
     
     // Aguardar um pouco para garantir que a transação foi removida
-    setTimeout(refreshData, 300);
+    setTimeout(() => {
+      console.log('🔄 Executando refresh dos dados após exclusão...');
+      refreshData();
+    }, 300);
+  };
+
+  const handleTransactionUpdated = () => {
+    console.log('✏️ Transação editada, atualizando dados e gráficos...');
+    setHasUnsavedChanges(true);
+    
+    // Aguardar um momento para garantir que a API processou a edição
+    setTimeout(() => {
+      console.log('🔄 Executando refresh dos dados após edição...');
+      refreshData();
+    }, 200);
   };
 
   const handleSave = () => {
@@ -167,7 +204,7 @@ export default function DashboardPage() {
   // 🔒 Tela de carregamento durante verificação de autenticação
   if (!isLoaded || !isSignedIn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 flex items-center justify-center">
+      <div className="min-h-screen bg-blue-600 flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white mx-auto"></div>
           <p className="text-white text-lg font-medium">Verificando autenticação...</p>
@@ -187,10 +224,11 @@ export default function DashboardPage() {
   }
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
+    const normalized = normalizeAmount(value);
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'BRL'
-    }).format(value || 0);
+      currency: 'USD'
+    }).format(normalized);
   };
 
   return (
@@ -216,10 +254,10 @@ export default function DashboardPage() {
             className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/30"
           >
                 <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">
-                  Receitas vs Despesas
+                  Income vs Expenses
                 </h2>
-            <div className="h-[300px] sm:h-[400px]">
-              <ExpensesPieChart data={summary} />
+            <div className="h-[300px] sm:h-[400px]" key={`pie-${refreshKey}`}>
+              <ExpensesPieChart data={summary || { totalIncome: 0, totalExpenses: 0 }} />
                 </div>
           </motion.div>
 
@@ -238,7 +276,7 @@ export default function DashboardPage() {
                   <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Receitas</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Income</p>
                   <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                     {formatCurrency(summary?.totalIncome)}
                   </p>
@@ -276,7 +314,7 @@ export default function DashboardPage() {
                   type="income"
                   onDelete={handleTransactionDeleted}
                   isEditMode={isEditMode}
-                  onUpdated={refreshData}
+                  onUpdated={handleTransactionUpdated}
                 />
                   </motion.div>
                 )}
@@ -295,7 +333,7 @@ export default function DashboardPage() {
                   <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
                     </div>
                     <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Despesas</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Expenses</p>
                   <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                     {formatCurrency(summary?.totalExpenses)}
                       </p>
@@ -333,7 +371,7 @@ export default function DashboardPage() {
                   type="expense"
                   onDelete={handleTransactionDeleted}
                   isEditMode={isEditMode}
-                  onUpdated={refreshData}
+                  onUpdated={handleTransactionUpdated}
                 />
                   </motion.div>
                 )}
@@ -349,10 +387,10 @@ export default function DashboardPage() {
           className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/30"
         >
           <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">
-            Despesas por Categoria
+            Expenses by Category
           </h2>
-          <div className="h-[300px] sm:h-[400px]">
-            <ExpensesColumnChart data={summary} />
+          <div className="h-[300px] sm:h-[400px]" key={`column-${refreshKey}`}>
+            <ExpensesColumnChart data={summary || { expenseCategories: {} }} />
           </div>
         </motion.div>
 

@@ -11,6 +11,7 @@ import {
   Legend,
   Title,
 } from "chart.js";
+import { normalizeType, normalizeAmount, TRANSACTION_TYPES } from '../utils/transactionHelpers';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Title);
 
@@ -31,11 +32,18 @@ export default function Dashboard() {
     })();
   }, []);
 
+  // CORES FIXAS
+  const INCOME_COLOR = "#22c55e";  // Verde - SEMPRE para receitas
+  const EXPENSE_COLOR = "#ef4444"; // Vermelho - SEMPRE para despesas
+  const BALANCE_COLOR = "#3b82f6"; // Azul - para saldo
+
   const summary = useMemo(() => {
     let income = 0, expenses = 0;
     for (const t of transactions) {
-      if (t.type === "income") income += Number(t.amount || 0);
-      if (t.type === "expense") expenses += Number(t.amount || 0);
+      const type = normalizeType(t.type);
+      const amount = normalizeAmount(t.amount);
+      if (type === TRANSACTION_TYPES.INCOME) income += amount;
+      if (type === TRANSACTION_TYPES.EXPENSE) expenses += amount;
     }
     return { income, expenses, savings: income - expenses };
   }, [transactions]);
@@ -46,8 +54,10 @@ export default function Dashboard() {
       const d = new Date(t.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const current = map.get(key) || { income: 0, expense: 0 };
-      if (t.type === "income") current.income += Number(t.amount || 0);
-      if (t.type === "expense") current.expense += Number(t.amount || 0);
+      const type = normalizeType(t.type);
+      const amount = normalizeAmount(t.amount);
+      if (type === TRANSACTION_TYPES.INCOME) current.income += amount;
+      if (type === TRANSACTION_TYPES.EXPENSE) current.expense += amount;
       map.set(key, current);
     }
     const labels = Array.from(map.keys()).sort();
@@ -57,25 +67,47 @@ export default function Dashboard() {
     return { labels, incomes, expenses, balance };
   }, [transactions]);
 
-  const data = {
-    labels: monthlySeries.labels,
-    datasets: [
-      { label: "Receitas", data: monthlySeries.incomes, borderColor: "#10b981", backgroundColor: "#10b98133" },
-      { label: "Despesas", data: monthlySeries.expenses, borderColor: "#ef4444", backgroundColor: "#ef444433" },
-      { label: "Saldo", data: monthlySeries.balance, borderColor: "#3b82f6", backgroundColor: "#3b82f633" },
-    ],
-  };
+  // CORES FIXAS
+  const INCOME_COLOR = "#22c55e";  // Verde - SEMPRE para receitas
+  const EXPENSE_COLOR = "#ef4444"; // Vermelho - SEMPRE para despesas
+  const BALANCE_COLOR = "#3b82f6"; // Azul - para saldo
+
+  const data = useMemo(() => {
+    return {
+      labels: monthlySeries.labels,
+      datasets: [
+        { 
+          label: "Income", 
+          data: monthlySeries.incomes, 
+          borderColor: INCOME_COLOR,   // VERDE FIXO
+          backgroundColor: `${INCOME_COLOR}33` 
+        },
+        { 
+          label: "Expenses", 
+          data: monthlySeries.expenses, 
+          borderColor: EXPENSE_COLOR,   // VERMELHO FIXO
+          backgroundColor: `${EXPENSE_COLOR}33` 
+        },
+        { 
+          label: "Saldo", 
+          data: monthlySeries.balance, 
+          borderColor: BALANCE_COLOR, 
+          backgroundColor: `${BALANCE_COLOR}33` 
+        },
+      ],
+    };
+  }, [monthlySeries]);
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white rounded-lg p-4 shadow">
-          <p className="text-xs text-gray-500">Receitas</p>
-          <p className="text-xl font-semibold">R$ {summary.income.toFixed(2)}</p>
+          <p className="text-xs text-gray-500">Income</p>
+          <p className="text-xl font-semibold">${summary.income.toFixed(2)}</p>
         </div>
         <div className="bg-white rounded-lg p-4 shadow">
-          <p className="text-xs text-gray-500">Despesas</p>
-          <p className="text-xl font-semibold">R$ {summary.expenses.toFixed(2)}</p>
+          <p className="text-xs text-gray-500">Expenses</p>
+          <p className="text-xl font-semibold">${summary.expenses.toFixed(2)}</p>
         </div>
         <div className="bg-white rounded-lg p-4 shadow">
           <p className="text-xs text-gray-500">Saldo</p>
@@ -84,7 +116,7 @@ export default function Dashboard() {
       </div>
 
       <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4">
+        <div className="bg-blue-600 p-4">
           <h3 className="text-lg font-bold text-white flex items-center space-x-2">
             <Image
               src="/images/Robo-grafico.png"

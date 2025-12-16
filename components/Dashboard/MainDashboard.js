@@ -43,8 +43,8 @@ const MainDashboard = () => {
         variants={itemVariants}
         className={`relative overflow-hidden rounded-3xl p-8 ${
           theme === 'dark' 
-            ? 'bg-gradient-to-r from-gray-800 to-gray-900' 
-            : 'bg-gradient-to-r from-blue-600 to-purple-600'
+            ? 'bg-gray-800' 
+            : 'bg-blue-600'
         }`}
       >
         <div className="relative z-10">
@@ -170,8 +170,8 @@ const MainDashboard = () => {
         variants={itemVariants}
         className={`rounded-2xl p-6 ${
           theme === 'dark' 
-            ? 'bg-gradient-to-r from-purple-900/50 to-blue-900/50 border border-purple-800' 
-            : 'bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200'
+            ? 'bg-purple-900/50 border border-purple-800' 
+            : 'bg-purple-50 border border-purple-200'
         }`}
       >
         <div className="flex items-center space-x-4 mb-4">

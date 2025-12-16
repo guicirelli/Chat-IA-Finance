@@ -62,7 +62,7 @@ export default async function handler(req, res) {
     y += 30;
     
     if (transactions.length === 0) {
-      doc.fontSize(12).text('Nenhuma transação encontrada.', 70, y);
+      doc.fontSize(12).text('No transactions found.', 70, y);
     } else {
       doc.fontSize(10);
       transactions.forEach((transaction, index) => {

@@ -38,10 +38,10 @@ const QuickActions = () => {
   ];
 
   const colorClasses = {
-    green: 'from-green-500 to-emerald-500',
-    red: 'from-red-500 to-pink-500',
-    blue: 'from-blue-500 to-indigo-500',
-    purple: 'from-purple-500 to-violet-500',
+    green: 'bg-green-500',
+    red: 'bg-red-500',
+    blue: 'bg-blue-500',
+    purple: 'bg-purple-500',
   };
 
   return (
@@ -57,7 +57,7 @@ const QuickActions = () => {
     >
       {/* Header */}
       <div className="flex items-center space-x-3 mb-6">
-        <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+        <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
@@ -96,7 +96,7 @@ const QuickActions = () => {
               }`}
             >
             <div className="flex items-center space-x-4">
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${colorClasses[action.color]} flex items-center justify-center`}>
+              <div className={`w-12 h-12 rounded-xl ${colorClasses[action.color]} flex items-center justify-center`}>
                 <span className="text-2xl">{action.icon}</span>
               </div>
               <div className="flex-1">
@@ -129,8 +129,8 @@ const QuickActions = () => {
         transition={{ delay: 0.5 }}
         className={`mt-6 p-4 rounded-xl ${
           theme === 'dark' 
-            ? 'bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-800' 
-            : 'bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200'
+            ? 'bg-purple-900/30 border border-purple-800' 
+            : 'bg-purple-50 border border-purple-200'
         }`}
       >
         <div className="flex items-center space-x-3">
@@ -159,7 +159,7 @@ const QuickActions = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg text-sm font-medium"
+            className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm font-medium"
           >
             Conversar
           </motion.button>

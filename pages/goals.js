@@ -137,7 +137,7 @@ export default function GoalsPage() {
               <Target className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Nenhuma meta definida
+              No goal defined
             </h3>
             <p className="text-gray-500 dark:text-gray-400 mb-6">
               Crie sua primeira meta financeira para começar a planejar seu futuro.

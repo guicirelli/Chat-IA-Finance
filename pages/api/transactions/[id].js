@@ -36,26 +36,39 @@ export default async function handler(req, res) {
       const body = req.body || {};
       const existing = global.tempTransactionsByPeriod[currentPeriod][indexInPeriod];
 
+      console.log('✏️ Editando transação:', { id, currentPeriod, body, existing: { ...existing } });
+
       // Validar campos básicos
       const allowedTypes = ['income', 'expense'];
       if (body.type && !allowedTypes.includes(body.type)) {
         return res.status(400).json({ error: 'Tipo inválido' });
       }
+      
+      // Atualizar valor
       if (body.amount !== undefined) {
         const parsed = parseFloat(body.amount);
         if (isNaN(parsed) || parsed <= 0) {
           return res.status(400).json({ error: 'Valor inválido' });
         }
-        existing.amount = parsed;
+        existing.amount = Math.abs(parsed); // Garantir valor positivo
+        console.log('💰 Valor atualizado:', existing.amount);
       }
+      
+      // Atualizar categoria
       if (body.category !== undefined) {
-        existing.category = String(body.category);
+        existing.category = String(body.category || 'Other').trim();
+        console.log('🏷️ Categoria atualizada:', existing.category);
       }
+      
+      // Atualizar nota
       if (body.note !== undefined) {
         existing.note = String(body.note || '');
       }
+      
+      // Atualizar tipo (se fornecido)
       if (body.type !== undefined) {
         existing.type = body.type;
+        console.log('📝 Tipo atualizado:', existing.type);
       }
 
       // Atualizar data e mover de período se necessário
@@ -66,9 +79,18 @@ export default async function handler(req, res) {
         }
         existing.date = newDate;
         const newPeriod = `${newDate.getFullYear()}-${newDate.getMonth()}`;
+        
+        console.log('📅 Data atualizada:', { 
+          oldPeriod: currentPeriod, 
+          newPeriod, 
+          newDate: newDate.toISOString() 
+        });
+        
         if (newPeriod !== currentPeriod) {
           // Remover do período atual
           global.tempTransactionsByPeriod[currentPeriod].splice(indexInPeriod, 1);
+          console.log('🔄 Movendo transação de período:', { from: currentPeriod, to: newPeriod });
+          
           // Criar período destino se necessário e adicionar
           if (!global.tempTransactionsByPeriod[newPeriod]) {
             global.tempTransactionsByPeriod[newPeriod] = [];
@@ -81,7 +103,19 @@ export default async function handler(req, res) {
       // Marcar atualização
       existing.updatedAt = new Date();
 
-      return res.status(200).json({ message: 'Transação atualizada com sucesso', transaction: existing, periodKey: currentPeriod });
+      console.log('✅ Transação atualizada com sucesso:', { 
+        id: existing._id, 
+        amount: existing.amount, 
+        category: existing.category,
+        type: existing.type,
+        periodKey: currentPeriod 
+      });
+
+      return res.status(200).json({ 
+        message: 'Transação atualizada com sucesso', 
+        transaction: { ...existing }, // Retornar cópia para evitar referência
+        periodKey: currentPeriod 
+      });
     }
 
     return res.status(405).json({ error: 'Método não permitido' });

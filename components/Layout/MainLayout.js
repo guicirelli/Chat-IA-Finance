@@ -17,7 +17,7 @@ export default function MainLayout({
   const showDashboardControls = selectedMonth !== undefined;
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 relative overflow-hidden">
+    <div className="min-h-screen bg-blue-600 relative overflow-hidden">
       {/* Efeitos de fundo difusos - igual à página inicial */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob"></div>

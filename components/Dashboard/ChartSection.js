@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useState } from 'react';
+import { normalizeType, normalizeAmount, TRANSACTION_TYPES } from '../../utils/transactionHelpers';
 
 const ChartSection = () => {
   const { theme, transactions } = useFinanceStore();
@@ -22,17 +23,17 @@ const ChartSection = () => {
       });
       
       const income = dayTransactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
+        .filter(t => normalizeType(t.type) === TRANSACTION_TYPES.INCOME)
+        .reduce((sum, t) => sum + normalizeAmount(t.amount), 0);
       
       const expenses = dayTransactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
+        .filter(t => normalizeType(t.type) === TRANSACTION_TYPES.EXPENSE)
+        .reduce((sum, t) => sum + normalizeAmount(t.amount), 0);
       
       data.push({
-        date: date.toLocaleDateString('pt-BR', { weekday: 'short' }),
-        receitas: income,
-        despesas: expenses,
+        date: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        income: income,
+        expenses: expenses,
         saldo: income - expenses,
       });
     }
@@ -45,15 +46,21 @@ const ChartSection = () => {
     const categoryTotals = {};
     
     transactions
-      .filter(t => t.type === 'expense')
+      .filter(t => normalizeType(t.type) === TRANSACTION_TYPES.EXPENSE)
       .forEach(t => {
-        categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+        const category = String(t.category || 'Outros').trim();
+        const amount = normalizeAmount(t.amount);
+        if (amount > 0) {
+          categoryTotals[category] = (categoryTotals[category] || 0) + amount;
+        }
       });
     
-    return Object.entries(categoryTotals).map(([category, amount]) => ({
-      name: category,
-      value: amount,
-    }));
+    return Object.entries(categoryTotals)
+      .map(([category, amount]) => ({
+        name: category,
+        value: normalizeAmount(amount),
+      }))
+      .filter(item => item.value > 0); // Remover itens com valor zero
   };
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF7300'];
@@ -75,7 +82,7 @@ const ChartSection = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
@@ -150,7 +157,7 @@ const ChartSection = () => {
                   <YAxis 
                     stroke={theme === 'dark' ? '#9CA3AF' : '#6B7280'}
                     fontSize={12}
-                    tickFormatter={(value) => `R$ ${value}`}
+                    tickFormatter={(value) => `$${value}`}
                   />
                   <Tooltip
                     contentStyle={{
@@ -160,36 +167,39 @@ const ChartSection = () => {
                       color: theme === 'dark' ? '#FFFFFF' : '#000000',
                     }}
                     formatter={(value, name) => [
-                      new Intl.NumberFormat('pt-BR', {
+                      new Intl.NumberFormat('en-US', {
                         style: 'currency',
-                        currency: 'BRL',
+                        currency: 'USD',
                       }).format(value),
-                      name === 'receitas' ? 'Receitas' : name === 'despesas' ? 'Despesas' : 'Saldo'
+                      name === 'income' ? 'Income' : name === 'expenses' ? 'Expenses' : 'Balance'
                     ]}
                   />
                   <Line
                     type="monotone"
-                    dataKey="receitas"
-                    stroke="#10B981"
+                    dataKey="income"
+                    stroke="#22c55e"  // Verde mais vibrante
                     strokeWidth={3}
-                    dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: '#22c55e', strokeWidth: 2, r: 4 }}
                     activeDot={{ r: 6 }}
+                    name="Income"
                   />
                   <Line
                     type="monotone"
-                    dataKey="despesas"
-                    stroke="#EF4444"
+                    dataKey="expenses"
+                    stroke="#ef4444"  // Vermelho - FIXO
                     strokeWidth={3}
-                    dot={{ fill: '#EF4444', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
                     activeDot={{ r: 6 }}
+                    name="Expenses"
                   />
                   <Line
                     type="monotone"
                     dataKey="saldo"
-                    stroke="#3B82F6"
+                    stroke="#3b82f6"  // Azul para saldo
                     strokeWidth={3}
-                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
                     activeDot={{ r: 6 }}
+                    name="Saldo"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -227,11 +237,11 @@ const ChartSection = () => {
                       color: theme === 'dark' ? '#FFFFFF' : '#000000',
                     }}
                     formatter={(value) => [
-                      new Intl.NumberFormat('pt-BR', {
+                      new Intl.NumberFormat('en-US', {
                         style: 'currency',
-                        currency: 'BRL',
+                        currency: 'USD',
                       }).format(value),
-                      'Valor'
+                      'Value'
                     ]}
                   />
                 </PieChart>

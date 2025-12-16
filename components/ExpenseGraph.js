@@ -23,13 +23,13 @@ export default function ExpenseGraph({ chartData }) {
           options={{
             responsive: true,
             plugins: {
-              title: { display: true, text: "Distribuição de Despesas" },
+              title: { display: true, text: "Expense Distribution" },
               legend: { position: "bottom" },
             },
           }}
         />
       ) : (
-        <p className="text-gray-500 text-sm">Sem dados suficientes para exibir o gráfico.</p>
+        <p className="text-gray-500 text-sm">Not enough data to display the chart.</p>
       )}
     </div>
   );

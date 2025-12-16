@@ -98,8 +98,8 @@ const ChatPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className={`rounded-2xl p-6 ${
             theme === 'dark' 
-              ? 'bg-gradient-to-r from-purple-900/50 to-blue-900/50 border border-purple-800' 
-              : 'bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200'
+              ? 'bg-purple-900/50 border border-purple-800' 
+              : 'bg-purple-50 border border-purple-200'
           }`}
         >
           <div className="flex items-center space-x-4">
@@ -142,7 +142,7 @@ const ChatPage = () => {
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-purple-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">🤖</span>
                 </div>
                 <h3 className={`text-lg font-semibold mb-2 ${
@@ -173,8 +173,8 @@ const ChatPage = () => {
                     {/* Avatar */}
                     <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                       message.role === 'user'
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600'
-                        : 'bg-gradient-to-r from-purple-600 to-blue-600'
+                        ? 'bg-blue-600'
+                        : 'bg-purple-600'
                     }`}>
                       {message.role === 'user' ? (
                         <span className="text-white text-sm">U</span>
@@ -187,7 +187,7 @@ const ChatPage = () => {
                     <div
                       className={`rounded-2xl px-4 py-3 text-sm ${
                         message.role === 'user'
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                          ? 'bg-blue-600 text-white'
                           : theme === 'dark' 
                             ? 'bg-gray-700 text-white border border-gray-600'
                             : 'bg-gray-100 text-gray-900 border border-gray-200'
@@ -218,7 +218,7 @@ const ChatPage = () => {
                   className="flex justify-start"
                 >
                   <div className="flex items-start space-x-2">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 flex items-center justify-center">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
                       <span className="text-white text-sm">🤖</span>
                     </div>
                     <div className={`rounded-2xl px-4 py-3 text-sm ${
@@ -275,7 +275,7 @@ const ChatPage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               disabled={!input.trim() || loading}
-              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Enviar
             </motion.button>

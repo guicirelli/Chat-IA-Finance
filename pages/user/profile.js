@@ -40,13 +40,13 @@ export default function ProfilePage() {
 
     // Validar tipo de arquivo
     if (!file.type.startsWith('image/')) {
-      alert('Por favor, selecione uma imagem válida.');
+      alert('Please select a valid image.');
       return;
     }
 
     // Validar tamanho (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('A imagem deve ter no máximo 5MB.');
+      alert('The image must be at most 5MB.');
       return;
     }
 
@@ -63,7 +63,7 @@ export default function ProfilePage() {
   };
 
   const handleRemoveImage = async () => {
-    if (!confirm('Deseja realmente remover sua foto de perfil?')) {
+    if (!confirm('Do you really want to remove your profile photo?')) {
       return;
     }
 
@@ -119,14 +119,14 @@ export default function ProfilePage() {
         status: error.status
       });
       
-      let errorMessage = 'Erro ao salvar perfil. ';
+      let errorMessage = 'Error saving profile. ';
       
       if (error.errors && error.errors.length > 0) {
         errorMessage += error.errors.map(e => e.message).join(', ');
       } else if (error.message) {
         errorMessage += error.message;
       } else {
-        errorMessage += 'Tente novamente.';
+        errorMessage += 'Please try again.';
       }
       
       alert(errorMessage);
@@ -165,9 +165,9 @@ export default function ProfilePage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Perfil do Usuário</h1>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">User Profile</h1>
               <p className="text-slate-600 dark:text-slate-300 mt-2">
-                Gerencie suas informações pessoais
+                Manage your personal information
               </p>
             </div>
             <button
@@ -175,7 +175,7 @@ export default function ProfilePage() {
               className="flex items-center space-x-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Voltar</span>
+              <span>Back</span>
             </button>
           </div>
 
@@ -193,10 +193,10 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <p className="text-green-800 dark:text-green-200 font-medium">
-                    Perfil atualizado com sucesso!
+                    Profile updated successfully!
                   </p>
                   <p className="text-green-600 dark:text-green-300 text-sm">
-                    Suas informações foram salvas.
+                    Your information has been saved.
                   </p>
                 </div>
               </motion.div>
@@ -208,7 +208,7 @@ export default function ProfilePage() {
             <div className="flex items-start space-x-6">
               {/* Avatar */}
               <div className="relative group">
-                <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg">
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-blue-500 flex items-center justify-center shadow-lg">
                   {user.imageUrl || user.profileImageUrl ? (
                     <img 
                       src={user.imageUrl || user.profileImageUrl} 
@@ -229,7 +229,7 @@ export default function ProfilePage() {
                     <label 
                       htmlFor="profile-image-upload"
                       className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-all shadow-lg group-hover:scale-110 transform duration-200"
-                      title="Alterar foto"
+                      title="Change photo"
                     >
                       {uploadingImage ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -252,7 +252,7 @@ export default function ProfilePage() {
                         onClick={handleRemoveImage}
                         disabled={uploadingImage}
                         className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-700 transition-all shadow-lg group-hover:scale-110 transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Remover foto"
+                        title="Remove photo"
                       >
                         <Trash2 className="w-4 h-4 text-white" />
                       </button>
@@ -272,7 +272,7 @@ export default function ProfilePage() {
                     </label>
                     <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg px-4 py-3 border border-slate-200 dark:border-slate-700">
                       <p className="text-slate-900 dark:text-white font-medium capitalize">
-                        {user.username || 'Não definido'}
+                        {user.username || 'Not defined'}
                       </p>
                     </div>
                   </div>
@@ -295,7 +295,7 @@ export default function ProfilePage() {
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       <User className="w-4 h-4 inline mr-1" />
-                      Nome
+                      First Name
                     </label>
                     {isEditing ? (
                       <motion.input
@@ -304,13 +304,13 @@ export default function ProfilePage() {
                         type="text"
                         value={formData.firstName}
                         onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                        placeholder="Seu nome"
+                        placeholder="Your first name"
                         className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:border-blue-400"
                       />
                     ) : (
                       <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg px-4 py-3 border border-slate-200 dark:border-slate-700">
                         <p className="text-slate-900 dark:text-white font-medium">
-                          {user.unsafeMetadata?.firstName || user.firstName || 'Não informado'}
+                          {user.unsafeMetadata?.firstName || user.firstName || 'Not provided'}
                         </p>
                       </div>
                     )}
@@ -319,7 +319,7 @@ export default function ProfilePage() {
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       <User className="w-4 h-4 inline mr-1" />
-                      Sobrenome
+                      Last Name
                     </label>
                     {isEditing ? (
                       <motion.input
@@ -328,13 +328,13 @@ export default function ProfilePage() {
                         type="text"
                         value={formData.lastName}
                         onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                        placeholder="Seu sobrenome"
+                        placeholder="Your last name"
                         className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:border-blue-400"
                       />
                     ) : (
                       <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg px-4 py-3 border border-slate-200 dark:border-slate-700">
                         <p className="text-slate-900 dark:text-white font-medium">
-                          {user.unsafeMetadata?.lastName || user.lastName || 'Não informado'}
+                          {user.unsafeMetadata?.lastName || user.lastName || 'Not provided'}
                         </p>
                       </div>
                     )}
@@ -345,7 +345,7 @@ export default function ProfilePage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     <Calendar className="w-4 h-4 inline mr-1" />
-                    Data de Nascimento
+                    Date of Birth
                   </label>
                   {isEditing ? (
                     <motion.div 
@@ -366,16 +366,16 @@ export default function ProfilePage() {
                       <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-500 pointer-events-none group-hover:scale-110 transition-transform" />
                     </motion.div>
                   ) : (
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg px-4 py-3 border border-blue-200 dark:border-blue-800 flex items-center space-x-3">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg px-4 py-3 border border-blue-200 dark:border-blue-800 flex items-center space-x-3">
                       <div className="bg-blue-500 rounded-full p-1.5">
                         <Calendar className="w-4 h-4 text-white" />
                       </div>
                       <p className="text-slate-900 dark:text-white font-medium">
-                        {formData.birthDate ? new Date(formData.birthDate + 'T00:00:00').toLocaleDateString('pt-BR', { 
+                        {formData.birthDate ? new Date(formData.birthDate + 'T00:00:00').toLocaleDateString('en-US', { 
                           day: '2-digit', 
                           month: 'long', 
                           year: 'numeric' 
-                        }) : 'Não informado'}
+                        }) : 'Not provided'}
                       </p>
                     </div>
                   )}
@@ -394,24 +394,24 @@ export default function ProfilePage() {
                     className="flex items-center space-x-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                   >
                     <X className="w-4 h-4" />
-                    <span>Cancelar</span>
+                    <span>Cancel</span>
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleSave}
                     disabled={loading}
-                    className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Salvando...</span>
+                        <span>Saving...</span>
                       </>
                     ) : (
                       <>
                         <Save className="w-4 h-4" />
-                        <span>Salvar</span>
+                        <span>Save</span>
                       </>
                     )}
                   </motion.button>
@@ -421,10 +421,10 @@ export default function ProfilePage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg"
+                  className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-lg"
                 >
                   <Edit className="w-4 h-4" />
-                  <span>Editar Perfil</span>
+                  <span>Edit Profile</span>
                 </motion.button>
               )}
             </div>
@@ -434,24 +434,24 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                Informações da Conta
+                Account Information
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <User className="w-5 h-5 text-slate-400" />
                   <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Criado em</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Created on</p>
                     <p className="text-slate-900 dark:text-white font-medium">
-                      {new Date(user.createdAt).toLocaleDateString('pt-BR')}
+                      {new Date(user.createdAt).toLocaleDateString('en-US')}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Mail className="w-5 h-5 text-slate-400" />
                   <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Última atualização</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Last updated</p>
                     <p className="text-slate-900 dark:text-white font-medium">
-                      {new Date(user.updatedAt).toLocaleDateString('pt-BR')}
+                      {new Date(user.updatedAt).toLocaleDateString('en-US')}
                     </p>
                   </div>
                 </div>
@@ -460,7 +460,7 @@ export default function ProfilePage() {
 
             <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                Segurança
+                Security
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
@@ -470,8 +470,8 @@ export default function ProfilePage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Email verificado</p>
-                    <p className="text-green-600 dark:text-green-400 font-medium">Verificado</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Email verified</p>
+                    <p className="text-green-600 dark:text-green-400 font-medium">Verified</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -481,7 +481,7 @@ export default function ProfilePage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Autenticação</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Authentication</p>
                     <p className="text-blue-600 dark:text-blue-400 font-medium">Clerk</p>
                   </div>
                 </div>

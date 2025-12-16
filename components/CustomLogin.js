@@ -254,11 +254,11 @@ export default function CustomLogin({ onSuccess }) {
         className=""
       >
         <div className="text-center mb-8">
-          <div className="mx-auto w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-3 shadow-lg">
+          <div className="mx-auto w-14 h-14 bg-blue-500 rounded-xl flex items-center justify-center mb-3 shadow-lg">
             <Mail className="w-7 h-7 text-white" />
           </div>
-          <h3 className="text-2xl font-extrabold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent mb-2">
-            Verificação de Email
+          <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-2">
+            Email Verification
           </h3>
           <p className="text-slate-600 dark:text-slate-400 text-xs max-w-sm mx-auto">
             Enviamos um código de verificação para <span className="font-semibold text-slate-900 dark:text-white">{formData.email}</span>
@@ -283,7 +283,7 @@ export default function CustomLogin({ onSuccess }) {
             transition={{ delay: 0.1 }}
           >
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
-              Código de Verificação
+              Verification Code
             </label>
             <input
               type="text"
@@ -310,7 +310,7 @@ export default function CustomLogin({ onSuccess }) {
             transition={{ delay: 0.2 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="relative w-full py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-lg font-bold text-base shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group"
+            className="relative w-full py-3 bg-blue-600 text-white rounded-lg font-bold text-base shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group"
           >
             <span className="relative z-10">
               {loading ? (
@@ -325,7 +325,7 @@ export default function CustomLogin({ onSuccess }) {
                 'Verificar Código'
               )}
             </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-blue-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </motion.button>
         </form>
       </motion.div>
@@ -339,11 +339,11 @@ export default function CustomLogin({ onSuccess }) {
       className=""
     >
       <div className="text-center mb-8">
-        <h3 className="text-[26px] font-extrabold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent mb-2">
-          {isLogin ? 'Bem-vindo de volta!' : 'Crie sua conta'}
+        <h3 className="text-[26px] font-extrabold text-slate-900 dark:text-white mb-2">
+          {isLogin ? 'Welcome back!' : 'Create your account'}
         </h3>
         <p className="text-slate-600 dark:text-slate-400 text-[13px]">
-          {isLogin ? 'Entre com suas credenciais para continuar' : 'Junte-se a nós gratuitamente'}
+          {isLogin ? 'Sign in with your credentials to continue' : 'Join us for free'}
         </p>
       </div>
 
@@ -383,7 +383,7 @@ export default function CustomLogin({ onSuccess }) {
               transition={{ delay: 0.1 }}
             >
               <label className="block text-[13px] font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                Email ou Username
+                Email or Username
               </label>
               <div className="relative group">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
@@ -392,7 +392,7 @@ export default function CustomLogin({ onSuccess }) {
                   name="emailOrUsername"
                   value={formData.emailOrUsername}
                   onChange={handleInputChange}
-                  placeholder="seu@email.com ou username"
+                  placeholder="your@email.com or username"
                   autoComplete="username"
                   autoCapitalize="none"
                   spellCheck="false"
@@ -481,7 +481,7 @@ export default function CustomLogin({ onSuccess }) {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  placeholder="seu@email.com"
+                  placeholder="your@email.com"
                   autoComplete="email"
                   autoCapitalize="none"
                   spellCheck="false"
@@ -529,7 +529,7 @@ export default function CustomLogin({ onSuccess }) {
               transition={{ delay: 0.4 }}
             >
               <label className="block text-[13px] font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                Confirmar Senha
+                Confirm Password
               </label>
               <div className="relative group">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
@@ -548,7 +548,7 @@ export default function CustomLogin({ onSuccess }) {
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-                  aria-label={showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -565,7 +565,7 @@ export default function CustomLogin({ onSuccess }) {
           transition={{ delay: isLogin ? 0.3 : 0.5 }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="relative w-full py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-lg font-bold text-[17px] shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group"
+          className="relative w-full py-3 bg-blue-600 text-white rounded-lg font-bold text-[17px] shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group"
         >
           <span className="relative z-10">
             {loading ? (
@@ -574,13 +574,13 @@ export default function CustomLogin({ onSuccess }) {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                {isLogin ? 'Entrando...' : 'Criando conta...'}
+                {isLogin ? 'Signing in...' : 'Creating account...'}
               </span>
             ) : (
-              <span>{isLogin ? 'Entrar' : 'Criar Conta'}</span>
+              <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
             )}
           </span>
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-blue-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </motion.button>
 
         <div className="relative">
@@ -588,7 +588,7 @@ export default function CustomLogin({ onSuccess }) {
             <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
           </div>
           <div className="relative flex justify-center text-[13px]">
-            <span className="px-3 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400">ou</span>
+            <span className="px-3 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400">or</span>
           </div>
         </div>
 
@@ -607,7 +607,7 @@ export default function CustomLogin({ onSuccess }) {
             }}
             className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold transition-colors duration-200 hover:underline text-[13px]"
           >
-            {isLogin ? 'Não tem conta? Criar uma agora' : 'Já tem conta? Faça login'}
+            {isLogin ? "Don't have an account? Create one now" : 'Already have an account? Sign in'}
           </button>
         </motion.div>
       </form>

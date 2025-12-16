@@ -18,10 +18,10 @@ const GoalsProgress = () => {
   };
 
   const getProgressColor = (progress) => {
-    if (progress >= 100) return 'from-green-500 to-emerald-500';
-    if (progress >= 75) return 'from-blue-500 to-indigo-500';
-    if (progress >= 50) return 'from-yellow-500 to-orange-500';
-    return 'from-red-500 to-pink-500';
+    if (progress >= 100) return 'bg-green-500';
+    if (progress >= 75) return 'bg-blue-500';
+    if (progress >= 50) return 'bg-yellow-500';
+    return 'bg-red-500';
   };
 
   return (
@@ -38,7 +38,7 @@ const GoalsProgress = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
             </svg>
@@ -59,7 +59,7 @@ const GoalsProgress = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium"
+          className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium"
         >
           Nova Meta
         </motion.button>
@@ -85,7 +85,7 @@ const GoalsProgress = () => {
                 } transition-colors`}
               >
                 <div className="flex items-center space-x-4 mb-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-2xl">
+                  <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center text-2xl">
                     {getGoalIcon(goal.type)}
                   </div>
                   <div className="flex-1">
@@ -135,7 +135,7 @@ const GoalsProgress = () => {
                       initial={{ width: 0 }}
                       animate={{ width: `${progress}%` }}
                       transition={{ delay: 0.5 + index * 0.1, duration: 1 }}
-                      className={`h-3 rounded-full bg-gradient-to-r ${getProgressColor(progress)}`}
+                      className={`h-3 rounded-full ${getProgressColor(progress)}`}
                     />
                   </div>
                 </div>
@@ -181,7 +181,7 @@ const GoalsProgress = () => {
             transition={{ delay: 0.3 }}
             className="text-center py-12"
           >
-            <div className="w-16 h-16 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
               </svg>
@@ -189,7 +189,7 @@ const GoalsProgress = () => {
             <h4 className={`text-lg font-semibold ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             } mb-2`}>
-              Nenhuma meta definida
+              No goal defined
             </h4>
             <p className={`text-sm ${
               theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
@@ -199,7 +199,7 @@ const GoalsProgress = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg font-medium"
+              className="px-6 py-3 bg-emerald-500 text-white rounded-lg font-medium"
             >
               Criar Primeira Meta
             </motion.button>

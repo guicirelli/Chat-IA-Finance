@@ -59,7 +59,7 @@ const RecentTransactions = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
@@ -73,7 +73,7 @@ const RecentTransactions = () => {
             <p className={`text-sm ${
               theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
             }`}>
-              Suas últimas movimentações
+              Your latest transactions
             </p>
           </div>
         </div>
@@ -129,7 +129,7 @@ const RecentTransactions = () => {
                 <p className={`text-xs ${
                   theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
                 }`}>
-                  {new Date(transaction.date).toLocaleDateString('pt-BR')}
+                  {new Date(transaction.date).toLocaleDateString('en-US')}
                 </p>
               </div>
 
@@ -141,9 +141,9 @@ const RecentTransactions = () => {
                     : 'text-red-600'
                 }`}>
                   {transaction.type === 'income' ? '+' : '-'}
-                  {new Intl.NumberFormat('pt-BR', {
+                  {new Intl.NumberFormat('en-US', {
                     style: 'currency',
-                    currency: 'BRL',
+                    currency: 'USD',
                   }).format(transaction.amount)}
                 </p>
                 <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(transaction.category)}`}>
@@ -167,7 +167,7 @@ const RecentTransactions = () => {
             <h4 className={`text-lg font-semibold ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             } mb-2`}>
-              Nenhuma transação ainda
+              No transactions yet
             </h4>
             <p className={`text-sm ${
               theme === 'dark' ? 'text-gray-400' : 'text-gray-600'

@@ -106,8 +106,8 @@ export default function TransactionsPage() {
   };
 
   const categories = {
-    income: ['Salário', 'Bônus', 'Freelance', 'Investimentos', 'Vendas', 'Outros'],
-    expense: ['Alimentação', 'Transporte', 'Moradia', 'Saúde', 'Educação', 'Entretenimento', 'Roupas', 'Outros']
+    income: ['Salary', 'Bonus', 'Freelance', 'Investments', 'Sales', 'Other'],
+    expense: ['Food', 'Transport', 'Housing', 'Health', 'Education', 'Entertainment', 'Clothing', 'Other']
   };
 
   return (
@@ -125,14 +125,14 @@ export default function TransactionsPage() {
               className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
             >
               <TrendingUp className="w-4 h-4" />
-              <span>Receita</span>
+              <span>Income</span>
             </button>
             <button
               onClick={() => { setModalType('expense'); setIsModalOpen(true); }}
               className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
             >
               <TrendingDown className="w-4 h-4" />
-              <span>Despesa</span>
+              <span>Expense</span>
             </button>
           </div>
         </div>
@@ -194,9 +194,9 @@ export default function TransactionsPage() {
                 onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-sm"
               >
-                <option value="">Todos</option>
-                <option value="income">Receitas</option>
-                <option value="expense">Despesas</option>
+                <option value="">All</option>
+                <option value="income">Income</option>
+                <option value="expense">Expenses</option>
               </select>
             </div>
 
@@ -259,7 +259,7 @@ export default function TransactionsPage() {
                 <DollarSign className="w-8 h-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Nenhuma transação encontrada
+                No transactions found
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
                 Adicione sua primeira transação usando os botões acima.
@@ -308,7 +308,7 @@ export default function TransactionsPage() {
                               ? 'text-green-600 dark:text-green-400'
                               : 'text-red-600 dark:text-red-400'
                           }`}>
-                            {transaction.type === 'income' ? 'Receita' : 'Despesa'}
+                            {transaction.type === 'income' ? 'Income' : 'Expense'}
                           </span>
                           {transaction.isFixed && (
                             <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">

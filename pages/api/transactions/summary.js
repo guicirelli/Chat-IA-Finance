@@ -50,9 +50,31 @@ export default async function handler(req, res) {
         expenseCategories: {}
       };
 
-      // Processa as transações
+      // Processa as transações com validação
       transactions.forEach(transaction => {
-        const { type, amount, category, isFixed } = transaction;
+        // Normalizar tipo
+        const type = String(transaction.type || '').toLowerCase().trim();
+        if (type !== 'income' && type !== 'expense') {
+          console.warn('Tipo inválido ignorado:', transaction.type);
+          return; // Ignorar transações com tipo inválido
+        }
+        
+        // Normalizar e validar valor
+        let amount = 0;
+        if (typeof transaction.amount === 'number' && Number.isFinite(transaction.amount)) {
+          amount = Math.abs(transaction.amount); // Sempre positivo
+        } else if (typeof transaction.amount === 'string') {
+          const parsed = parseFloat(transaction.amount.replace(/[^\d.,-]/g, '').replace(',', '.'));
+          amount = Number.isFinite(parsed) ? Math.abs(parsed) : 0;
+        }
+        
+        if (amount === 0) {
+          console.warn('Valor zero ou inválido ignorado:', transaction.amount);
+          return; // Ignorar valores zero ou inválidos
+        }
+        
+        const category = String(transaction.category || 'Outros').trim();
+        const isFixed = Boolean(transaction.isFixed);
         
         // Atualiza totais por tipo
         summary[type].total += amount;

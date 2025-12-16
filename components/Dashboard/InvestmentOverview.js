@@ -42,7 +42,7 @@ const InvestmentOverview = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
@@ -63,7 +63,7 @@ const InvestmentOverview = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium"
+          className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium"
         >
           Adicionar Investimento
         </motion.button>
@@ -238,7 +238,7 @@ const InvestmentOverview = () => {
                     : 'bg-gray-50 hover:bg-gray-100'
                 } transition-colors`}
               >
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-2xl">
+                <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-2xl">
                   {getInvestmentIcon(investment.type)}
                 </div>
                 <div className="flex-1">
