@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Trash2, 
@@ -34,11 +34,14 @@ export default function TransactionDetails({ transactions, type, onDelete, isEdi
   const [savingId, setSavingId] = useState(null);
   const [form, setForm] = useState({ amount: '', category: '', date: '' });
 
-  // Filtrar usando função utilitária que normaliza tipos
-  const filteredTransactions = filterByType(transactions || [], type);
+  // Filtrar usando função utilitária que normaliza tipos - usar useMemo para evitar recálculos
+  const filteredTransactions = useMemo(() => {
+    if (!Array.isArray(transactions)) return [];
+    return filterByType(transactions, type);
+  }, [transactions, type]);
   
   // Obter cores baseadas no TIPO, não no valor
-  const colors = getColorByType(type);
+  const colors = useMemo(() => getColorByType(type), [type]);
 
   const handleDelete = async (transactionId) => {
     setDeletingId(transactionId);

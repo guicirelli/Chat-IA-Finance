@@ -71,9 +71,22 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         console.log('📊 Carregando inicial - mês:', selectedMonth, 'ano:', selectedYear);
+        const timestamp = Date.now();
         const [summaryResponse, transactionsResponse] = await Promise.all([
-          fetch(`/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}`),
-          fetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}`)
+          fetch(`/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`, {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          }),
+          fetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`, {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          })
         ]);
 
         const [summaryData, transactionsData] = await Promise.all([
@@ -87,8 +100,19 @@ export default function DashboardPage() {
           total: transactionsData?.length || 0
         });
 
-        setSummary(summaryData);
-        setTransactions(transactionsData);
+        // VALIDAÇÃO: Garantir que os valores são números válidos
+        const validatedSummary = {
+          ...summaryData,
+          totalIncome: typeof summaryData?.totalIncome === 'number' && !isNaN(summaryData.totalIncome) 
+            ? Math.max(0, summaryData.totalIncome)
+            : 0,
+          totalExpenses: typeof summaryData?.totalExpenses === 'number' && !isNaN(summaryData.totalExpenses)
+            ? Math.max(0, summaryData.totalExpenses)
+            : 0
+        };
+
+        setSummary(validatedSummary);
+        setTransactions(Array.isArray(transactionsData) ? transactionsData : []);
       } catch (error) {
         console.error('❌ Erro ao buscar dados:', error);
       } finally {
@@ -103,11 +127,23 @@ export default function DashboardPage() {
     try {
       console.log('🔍 Buscando dados atualizados para mês:', selectedMonth, 'ano:', selectedYear);
       
-      // Adicionar timestamp para evitar cache
+      // Adicionar timestamp para evitar cache (especialmente no Netlify)
       const timestamp = Date.now();
       const [summaryResponse, transactionsResponse] = await Promise.all([
-        fetch(`/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`),
-        fetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`)
+        fetch(`/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`, {
+          cache: 'no-store', // FORÇAR SEM CACHE no Netlify
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        }),
+        fetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`, {
+          cache: 'no-store', // FORÇAR SEM CACHE no Netlify
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        })
       ]);
 
       if (!summaryResponse.ok || !transactionsResponse.ok) {
@@ -128,12 +164,26 @@ export default function DashboardPage() {
         transactionsData,
         totalTransactions: transactionsData?.length || 0,
         totalIncome: summaryData?.totalIncome,
-        totalExpenses: summaryData?.totalExpenses
+        totalExpenses: summaryData?.totalExpenses,
+        // VALIDAÇÃO: Verificar se os valores estão corretos
+        incomeValidation: typeof summaryData?.totalIncome === 'number' && !isNaN(summaryData.totalIncome),
+        expenseValidation: typeof summaryData?.totalExpenses === 'number' && !isNaN(summaryData.totalExpenses)
       });
       
+      // VALIDAÇÃO: Garantir que os valores são números válidos
+      const validatedSummary = {
+        ...summaryData,
+        totalIncome: typeof summaryData?.totalIncome === 'number' && !isNaN(summaryData.totalIncome) 
+          ? Math.max(0, summaryData.totalIncome) // Garantir que não é negativo
+          : 0,
+        totalExpenses: typeof summaryData?.totalExpenses === 'number' && !isNaN(summaryData.totalExpenses)
+          ? Math.max(0, summaryData.totalExpenses) // Garantir que não é negativo
+          : 0
+      };
+      
       // Atualizar estado - isso vai forçar re-renderização dos gráficos
-      setSummary(summaryData);
-      setTransactions(transactionsData);
+      setSummary(validatedSummary);
+      setTransactions(Array.isArray(transactionsData) ? transactionsData : []);
       
       // Forçar atualização dos gráficos incrementando a chave
       setRefreshKey(prev => prev + 1);
@@ -152,11 +202,12 @@ export default function DashboardPage() {
     console.log('✅ Transação adicionada, atualizando dados...');
     setHasUnsavedChanges(true);
     
-    // Aguardar um momento para garantir que a API salvou
+    // Aguardar um momento para garantir que a API salvou (aumentar tempo no Netlify)
+    // No Netlify pode haver latência, então esperamos um pouco mais
     setTimeout(() => {
       console.log('🔄 Executando refresh dos dados...');
       refreshData();
-    }, 300);
+    }, 500); // Aumentado de 300ms para 500ms para garantir no Netlify
   };
 
   const handleTransactionDeleted = () => {
@@ -174,11 +225,11 @@ export default function DashboardPage() {
     console.log('✏️ Transação editada, atualizando dados e gráficos...');
     setHasUnsavedChanges(true);
     
-    // Aguardar um momento para garantir que a API processou a edição
+    // Aguardar um momento para garantir que a API processou a edição (aumentar tempo no Netlify)
     setTimeout(() => {
       console.log('🔄 Executando refresh dos dados após edição...');
       refreshData();
-    }, 200);
+    }, 500); // Aumentado de 200ms para 500ms para garantir no Netlify
   };
 
   const handleSave = () => {

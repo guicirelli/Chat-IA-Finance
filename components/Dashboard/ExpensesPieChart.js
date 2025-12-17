@@ -18,26 +18,42 @@ export default function ExpensesPieChart({ data }) {
   const normalizedData = useMemo(() => {
     const totalIncome = normalizeAmount(data?.totalIncome || 0);
     const totalExpenses = normalizeAmount(data?.totalExpenses || 0);
+    
+    // CRÍTICO: Garantir que valores zero ainda sejam tratados corretamente
+    // Se ambos forem zero, mostrar "No data"
+    if (totalIncome === 0 && totalExpenses === 0) {
+      return {
+        totalIncome: 0,
+        totalExpenses: 0,
+        total: 0,
+        balance: 0,
+        hasData: false,
+        displayIncome: 0,
+        displayExpenses: 0
+      };
+    }
+    
     const total = totalIncome + totalExpenses;
     const balance = totalIncome - totalExpenses;
-    const hasData = total > 0;
     
     return {
       totalIncome,
       totalExpenses,
       total,
       balance,
-      hasData
+      hasData: true,
+      displayIncome: totalIncome,
+      displayExpenses: totalExpenses
     };
   }, [data?.totalIncome, data?.totalExpenses]);
 
   // Criar dados do gráfico com useMemo - ORDEM FIXA E IMUTÁVEL
   const chartData = useMemo(() => {
-    const { totalIncome, totalExpenses, hasData } = normalizedData;
+    const { displayIncome, displayExpenses, hasData, totalIncome, totalExpenses } = normalizedData;
     
-      if (!hasData) {
-        return {
-          labels: ['No data'],
+    if (!hasData) {
+      return {
+        labels: ['No data'],
         datasets: [
           {
             data: [100],
@@ -49,12 +65,46 @@ export default function ExpensesPieChart({ data }) {
       };
     }
 
-    // FIXED ORDER: Income ALWAYS first (index 0), Expenses ALWAYS second (index 1)
+    // Se receitas são zero mas há despesas, mostrar apenas despesas
+    if (totalIncome === 0 && totalExpenses > 0) {
+      return {
+        labels: ['Expenses'],
+        datasets: [
+          {
+            data: [displayExpenses],
+            backgroundColor: [EXPENSE_COLOR],
+            borderColor: [EXPENSE_BORDER],
+            borderWidth: 4,
+            hoverBorderWidth: 6,
+            hoverOffset: 8,
+          },
+        ],
+      };
+    }
+    
+    // Se despesas são zero mas há receitas, mostrar apenas receitas
+    if (totalExpenses === 0 && totalIncome > 0) {
+      return {
+        labels: ['Income'],
+        datasets: [
+          {
+            data: [displayIncome],
+            backgroundColor: [INCOME_COLOR],
+            borderColor: [INCOME_BORDER],
+            borderWidth: 4,
+            hoverBorderWidth: 6,
+            hoverOffset: 8,
+          },
+        ],
+      };
+    }
+
+    // Ambos existem - ORDEM FIXA: Income ALWAYS first (index 0), Expenses ALWAYS second (index 1)
     return {
       labels: ['Income', 'Expenses'], // FIXED ORDER - NEVER CHANGE
       datasets: [
         {
-          data: [totalIncome, totalExpenses], // ORDEM FIXA - Receitas primeiro
+          data: [displayIncome, displayExpenses], // ORDEM FIXA - Receitas primeiro
           backgroundColor: [
             INCOME_COLOR,  // Índice 0 = Receitas = VERDE (FIXO)
             EXPENSE_COLOR  // Índice 1 = Despesas = VERMELHO (FIXO)
@@ -71,7 +121,7 @@ export default function ExpensesPieChart({ data }) {
     };
   }, [normalizedData]);
 
-  // Calcular porcentagens com useMemo para garantir consistência
+  // Calcular porcentagens com useMemo - CORRIGIDO para lidar com valores zero
   const percentages = useMemo(() => {
     const { totalIncome, totalExpenses, total, hasData } = normalizedData;
     
@@ -79,12 +129,14 @@ export default function ExpensesPieChart({ data }) {
       return { incomePercent: '0.0', expensePercent: '0.0' };
     }
     
-    const incomePercent = ((totalIncome / total) * 100).toFixed(1);
-    const expensePercent = ((totalExpenses / total) * 100).toFixed(1);
+    // CRÍTICO: Calcular porcentagem baseado no total REAL
+    // Se totalIncome = 1000 e totalExpenses = 1000, cada um é 50%
+    const incomePercent = totalIncome > 0 ? ((totalIncome / total) * 100).toFixed(1) : '0.0';
+    const expensePercent = totalExpenses > 0 ? ((totalExpenses / total) * 100).toFixed(1) : '0.0';
     
-    // Garantir que a soma seja 100% (ajustar arredondamento)
+    // Garantir que a soma seja exatamente 100% (ajustar arredondamento)
     const sum = parseFloat(incomePercent) + parseFloat(expensePercent);
-    if (Math.abs(sum - 100) > 0.1) {
+    if (Math.abs(sum - 100) > 0.05 && total > 0) {
       // Ajustar a maior porcentagem para garantir soma = 100%
       if (totalIncome >= totalExpenses) {
         const adjusted = (100 - parseFloat(expensePercent)).toFixed(1);
@@ -164,16 +216,8 @@ export default function ExpensesPieChart({ data }) {
                 const percentage = finalIsIncome ? percentages.incomePercent : percentages.expensePercent;
                 const value = finalIsIncome ? totalIncome : totalExpenses;
                 
-                // VALIDAÇÃO FINAL: Garantir que a cor nunca muda
-                if (finalIsIncome && fillColor !== INCOME_COLOR) {
-                  console.error('ERRO CRÍTICO: Cor de receita mudou!', { fillColor, INCOME_COLOR });
-                }
-                if (!finalIsIncome && fillColor !== EXPENSE_COLOR) {
-                  console.error('ERRO CRÍTICO: Cor de despesa mudou!', { fillColor, EXPENSE_COLOR });
-                }
-                
                 return {
-                  text: `${label} • ${percentage}%`,
+                  text: `${label} • ${percentage}% • $${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                   fillStyle: fillColor,  // COR FIXA baseada em tipo - NUNCA MUDA
                   strokeStyle: borderColor,  // COR FIXA baseada em tipo - NUNCA MUDA
                   fontColor: textColor,
@@ -244,9 +288,11 @@ export default function ExpensesPieChart({ data }) {
     };
   }, [normalizedData, percentages]);
 
-  // Chave única baseada nos valores (sem Date.now para evitar re-renderizações desnecessárias)
+  // Chave única baseada nos valores - adicionar timestamp quando necessário para forçar atualização
   const chartKey = useMemo(() => {
-    return `pie-${normalizedData.totalIncome.toFixed(2)}-${normalizedData.totalExpenses.toFixed(2)}`;
+    // Usar timestamp apenas quando os valores mudarem significativamente
+    const timestamp = Date.now();
+    return `pie-${normalizedData.totalIncome.toFixed(2)}-${normalizedData.totalExpenses.toFixed(2)}-${timestamp}`;
   }, [normalizedData.totalIncome, normalizedData.totalExpenses]);
 
   // VALIDAÇÃO FINAL: Garantir que as cores estão corretas antes de renderizar
@@ -291,15 +337,15 @@ export default function ExpensesPieChart({ data }) {
     // VALIDAÇÃO EXTRA: Garantir que as cores estão corretas independente da ordem
     validatedData.datasets[0].backgroundColor = validatedData.datasets[0].backgroundColor.map((color, index) => {
       const label = labels[index];
-      if (label === 'Receitas') return INCOME_COLOR;
-      if (label === 'Despesas') return EXPENSE_COLOR;
+      if (label === 'Receitas' || label === 'Income') return INCOME_COLOR;
+      if (label === 'Despesas' || label === 'Expenses') return EXPENSE_COLOR;
       return color;
     });
     
     validatedData.datasets[0].borderColor = validatedData.datasets[0].borderColor.map((color, index) => {
       const label = labels[index];
-      if (label === 'Receitas') return INCOME_BORDER;
-      if (label === 'Despesas') return EXPENSE_BORDER;
+      if (label === 'Receitas' || label === 'Income') return INCOME_BORDER;
+      if (label === 'Despesas' || label === 'Expenses') return EXPENSE_BORDER;
       return color;
     });
     

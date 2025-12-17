@@ -97,12 +97,29 @@ export default async function handler(req, res) {
 
       // Calcula saldo
       summary.balance = summary.income.total - summary.expense.total;
-      summary.totalIncome = summary.income.total;
-      summary.totalExpenses = summary.expense.total;
+      summary.totalIncome = Math.max(0, summary.income.total); // Garantir que não é negativo
+      summary.totalExpenses = Math.max(0, summary.expense.total); // Garantir que não é negativo
       summary.incomeCategories = summary.income.byCategory;
       summary.expenseCategories = summary.expense.byCategory;
 
-      return res.status(200).json(summary);
+      // VALIDAÇÃO FINAL: Garantir que todos os valores numéricos são válidos
+      const validatedSummary = {
+        ...summary,
+        totalIncome: Number.isFinite(summary.totalIncome) ? summary.totalIncome : 0,
+        totalExpenses: Number.isFinite(summary.totalExpenses) ? summary.totalExpenses : 0,
+        balance: Number.isFinite(summary.balance) ? summary.balance : 0,
+        fixedExpenses: Number.isFinite(summary.fixedExpenses) ? summary.fixedExpenses : 0,
+        variableExpenses: Number.isFinite(summary.variableExpenses) ? summary.variableExpenses : 0
+      };
+
+      console.log('✅ Resumo calculado:', {
+        totalIncome: validatedSummary.totalIncome,
+        totalExpenses: validatedSummary.totalExpenses,
+        balance: validatedSummary.balance,
+        transactionsCount: transactions.length
+      });
+
+      return res.status(200).json(validatedSummary);
     } catch (error) {
       console.error("Erro ao calcular resumo:", error);
       return res.status(500).json({ error: "Erro interno do servidor" });

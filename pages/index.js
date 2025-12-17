@@ -66,8 +66,8 @@ export default function Landing() {
 
       {/* Seção Principal - 100% Responsiva */}
       <section className="min-h-screen flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10 2xl:p-12 relative z-10 py-8 sm:py-12 md:py-16 lg:py-20">
-        <div className="w-full max-w-7xl 2xl:max-w-[90rem] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16 2xl:gap-20 items-start lg:items-center">
+        <div className="w-full max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-12 items-start lg:items-center">
           {/* Lado Esquerdo - Logo e Formulário */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -93,10 +93,10 @@ export default function Landing() {
                 />
               </div>
               <div>
-                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-extrabold tracking-tight text-white drop-shadow-lg leading-tight">
+                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-3xl 2xl:text-3xl font-extrabold tracking-tight text-white drop-shadow-lg leading-tight">
                   Cirelli Financial Control
                 </h1>
-                <p className="text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg 2xl:text-xl text-blue-100/80 mt-0.5 sm:mt-1 tracking-wide font-medium">Your smart finance</p>
+                <p className="text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-base 2xl:text-base text-blue-100/80 mt-0.5 sm:mt-1 tracking-wide font-medium">Your smart finance</p>
               </div>
             </motion.div>
 
@@ -187,34 +187,34 @@ export default function Landing() {
             className="text-white space-y-6"
           >
 
-            {/* Heading principal com tipografia melhorada - 100% Responsivo */}
+            {/* Heading principal com tipografia melhorada - 100% Responsivo - Limitado para monitores grandes */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl 3xl:text-8xl font-extrabold leading-[1.1] sm:leading-tight tracking-tight mb-3 sm:mb-4 md:mb-5 lg:mb-6">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-5xl 2xl:text-5xl font-extrabold leading-[1.1] sm:leading-tight tracking-tight mb-3 sm:mb-4 md:mb-5 lg:mb-6">
                 Manage your{' '}
                 <span className="relative inline-block">
                   <span className="relative z-10 text-yellow-300 drop-shadow-lg">finances</span>
-                  <span className="absolute bottom-0 left-0 w-full h-2 sm:h-2.5 md:h-3 lg:h-4 bg-yellow-300/20 -skew-x-12 transform"></span>
+                  <span className="absolute bottom-0 left-0 w-full h-2 sm:h-2.5 md:h-3 lg:h-3 bg-yellow-300/20 -skew-x-12 transform"></span>
                 </span>
                 <br className="hidden sm:block" />
                 <span className="sm:hidden"> </span>
                 with{' '}
                 <span className="relative inline-block">
                   <span className="relative z-10 text-blue-100 drop-shadow-lg">intelligence</span>
-                  <span className="absolute bottom-0 left-0 w-full h-2 sm:h-2.5 md:h-3 lg:h-4 bg-blue-100/20 -skew-x-12 transform"></span>
+                  <span className="absolute bottom-0 left-0 w-full h-2 sm:h-2.5 md:h-3 lg:h-3 bg-blue-100/20 -skew-x-12 transform"></span>
                 </span>
               </h2>
                 </motion.div>
 
-            {/* Descrição aprimorada - Responsiva */}
+            {/* Descrição aprimorada - Responsiva - Limitada para monitores grandes */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-blue-50/95 leading-relaxed sm:leading-relaxed max-w-2xl 2xl:max-w-4xl font-normal mb-6 sm:mb-8 md:mb-10"
+              className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-xl 2xl:text-xl text-blue-50/95 leading-relaxed sm:leading-relaxed max-w-2xl font-normal mb-6 sm:mb-8 md:mb-10"
             >
               The complete platform to control income, expenses and achieve your financial goals with{' '}
               <span className="font-semibold text-white relative">
@@ -228,7 +228,7 @@ export default function Landing() {
               </span>.
             </motion.p>
 
-            {/* Cards de Features - Grid 2x2 com Glassmorphism melhorado - 100% Responsivo */}
+            {/* Cards de Features - Grid 2x2 com Glassmorphism melhorado - 100% Responsivo - Limitado para monitores grandes */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -247,17 +247,17 @@ export default function Landing() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ delay: 0.5 + index * 0.1, duration: 0.5, type: 'spring', stiffness: 100 }}
                   whileHover={{ scale: 1.05, y: -5 }}
-                  className="group relative bg-white/15 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 xl:p-7 2xl:p-8 border border-white/30 shadow-xl hover:shadow-2xl hover:bg-white/20 transition-all duration-300 overflow-hidden min-h-[100px] sm:min-h-[120px] md:min-h-[140px] lg:min-h-[160px]"
+                  className="group relative bg-white/15 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 xl:p-6 border border-white/30 shadow-xl hover:shadow-2xl hover:bg-white/20 transition-all duration-300 overflow-hidden min-h-[100px] sm:min-h-[120px] md:min-h-[140px] lg:min-h-[160px]"
                 >
                   {/* Gradient overlay on hover */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
                   
                   <div className="relative z-10">
-                    <div className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 2xl:w-24 2xl:h-24 ${feature.iconBg} rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-transform duration-300`}>
-                      <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 xl:w-9 xl:h-9 2xl:w-10 2xl:h-10 text-white" />
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-16 2xl:w-20 ${feature.iconBg} rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-transform duration-300`}>
+                      <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 xl:w-8 2xl:w-9 text-white" />
                     </div>
-                    <h3 className="font-bold text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-2xl mb-1 sm:mb-1.5 text-white group-hover:text-white/90 transition-colors leading-tight">{feature.title}</h3>
-                    <p className="text-blue-100/90 text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg 2xl:text-xl leading-relaxed">{feature.desc}</p>
+                    <h3 className="font-bold text-xs sm:text-sm md:text-base lg:text-lg xl:text-lg 2xl:text-xl mb-1 sm:mb-1.5 text-white group-hover:text-white/90 transition-colors leading-tight">{feature.title}</h3>
+                    <p className="text-blue-100/90 text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg leading-relaxed">{feature.desc}</p>
                   </div>
                   
                   {/* Shine effect */}
@@ -290,13 +290,13 @@ export default function Landing() {
               whileHover={{ scale: 1.05 }}
               className="text-center space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6 p-4 sm:p-5 md:p-6 lg:p-8 xl:p-10 2xl:p-12 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
               >
-              <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-lg leading-none">
+              <div className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl 2xl:text-7xl font-extrabold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-lg leading-none">
                 10K+
                 </div>
-              <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold text-white">
+              <div className="text-lg sm:text-xl md:text-2xl lg:text-2xl xl:text-3xl 2xl:text-3xl font-bold text-white">
                 Active Users
           </div>
-              <div className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-2xl text-blue-100/80 font-medium">
+              <div className="text-xs sm:text-sm md:text-base lg:text-base xl:text-lg 2xl:text-lg text-blue-100/80 font-medium">
                 Trust our platform
         </div>
             </motion.div>
@@ -310,13 +310,13 @@ export default function Landing() {
               whileHover={{ scale: 1.05 }}
               className="text-center space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6 p-4 sm:p-5 md:p-6 lg:p-8 xl:p-10 2xl:p-12 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
             >
-              <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent drop-shadow-lg leading-none">
+              <div className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl 2xl:text-7xl font-extrabold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent drop-shadow-lg leading-none">
                 R$ 2M+
               </div>
-              <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold text-white">
+              <div className="text-lg sm:text-xl md:text-2xl lg:text-2xl xl:text-3xl 2xl:text-3xl font-bold text-white">
                 Saved
                     </div>
-              <div className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-2xl text-blue-100/80 font-medium">
+              <div className="text-xs sm:text-sm md:text-base lg:text-base xl:text-lg 2xl:text-lg text-blue-100/80 font-medium">
                 By our users
               </div>
             </motion.div>
@@ -330,13 +330,13 @@ export default function Landing() {
               whileHover={{ scale: 1.05 }}
               className="text-center space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6 p-4 sm:p-5 md:p-6 lg:p-8 xl:p-10 2xl:p-12 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
             >
-              <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent drop-shadow-lg leading-none">
+              <div className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl 2xl:text-7xl font-extrabold bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent drop-shadow-lg leading-none">
                 4.9/5
               </div>
-              <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold text-white">
+              <div className="text-lg sm:text-xl md:text-2xl lg:text-2xl xl:text-3xl 2xl:text-3xl font-bold text-white">
                 Rating
               </div>
-              <div className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-2xl text-blue-100/80 font-medium">
+              <div className="text-xs sm:text-sm md:text-base lg:text-base xl:text-lg 2xl:text-lg text-blue-100/80 font-medium">
                 From our users
               </div>
             </motion.div>

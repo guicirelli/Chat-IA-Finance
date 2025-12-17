@@ -145,11 +145,13 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTransacti
       // Fechar modal primeiro
       onClose();
       
-      // Aguardar um momento e depois atualizar
+      // Aguardar um momento e depois atualizar (aumentar tempo no Netlify)
       setTimeout(() => {
         console.log('🔄 Chamando callback de atualização...');
-        onTransactionAdded();
-      }, 200);
+        if (typeof onTransactionAdded === 'function') {
+          onTransactionAdded();
+        }
+      }, 300); // Aumentado de 200ms para 300ms para garantir no Netlify
     } catch (error) {
       console.error('Erro ao adicionar transação:', error);
       setError(`Erro: ${error.message}`);
