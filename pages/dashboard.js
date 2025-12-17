@@ -71,28 +71,60 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         console.log('📊 Carregando inicial - mês:', selectedMonth, 'ano:', selectedYear);
+        
+        // CRÍTICO: No Netlify, fazer requisições sequenciais para garantir sincronização
         const timestamp = Date.now();
-        const [summaryResponse, transactionsResponse] = await Promise.all([
-          fetch(`/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`, {
-            cache: 'no-store',
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache'
-            }
-          }),
-          fetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`, {
-            cache: 'no-store',
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache'
-            }
-          })
-        ]);
+        const cacheHeaders = {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        };
 
-        const [summaryData, transactionsData] = await Promise.all([
-          summaryResponse.json(),
-          transactionsResponse.json()
-        ]);
+        // Primeiro buscar transações
+        console.log('📥 Buscando transações...');
+        const transactionsResponse = await fetch(
+          `/api/transactions?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`, 
+          {
+            cache: 'no-store',
+            headers: cacheHeaders
+          }
+        );
+
+        if (!transactionsResponse.ok) {
+          throw new Error(`Erro ao buscar transações: ${transactionsResponse.status}`);
+        }
+
+        const transactionsData = await transactionsResponse.json();
+        console.log('✅ Transações carregadas:', transactionsData?.length || 0);
+
+        // Aguardar antes de buscar summary
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // Depois buscar summary
+        console.log('📊 Buscando summary...');
+        const summaryResponse = await fetch(
+          `/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp + 1}`, 
+          {
+            cache: 'no-store',
+            headers: cacheHeaders
+          }
+        );
+
+        let summaryData;
+        if (summaryResponse.ok) {
+          summaryData = await summaryResponse.json();
+        } else {
+          console.warn('⚠️ Erro ao buscar summary, calculando manualmente...');
+          // Calcular manualmente se a API falhar
+          summaryData = {
+            totalIncome: transactionsData.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0),
+            totalExpenses: transactionsData.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0),
+            balance: 0,
+            incomeCategories: {},
+            expenseCategories: {}
+          };
+          summaryData.balance = summaryData.totalIncome - summaryData.totalExpenses;
+        }
 
         console.log('📊 Dados carregados:', {
           summary: summaryData,
@@ -127,37 +159,63 @@ export default function DashboardPage() {
     try {
       console.log('🔍 Buscando dados atualizados para mês:', selectedMonth, 'ano:', selectedYear);
       
-      // Adicionar timestamp para evitar cache (especialmente no Netlify)
+      // CRÍTICO: No Netlify, fazer requisições sequenciais para garantir sincronização
+      // Primeiro buscar transações para garantir que o global está populado
       const timestamp = Date.now();
-      const [summaryResponse, transactionsResponse] = await Promise.all([
-        fetch(`/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`, {
-          cache: 'no-store', // FORÇAR SEM CACHE no Netlify
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          }
-        }),
-        fetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`, {
-          cache: 'no-store', // FORÇAR SEM CACHE no Netlify
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          }
-        })
-      ]);
+      const cacheHeaders = {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'X-Request-ID': `${timestamp}-${Math.random().toString(36).substr(2, 9)}`
+      };
+      
+      console.log('📥 Passo 1: Buscando transações primeiro...');
+      const transactionsResponse = await fetch(
+        `/api/transactions?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp}`, 
+        {
+          cache: 'no-store',
+          method: 'GET',
+          headers: cacheHeaders
+        }
+      );
 
-      if (!summaryResponse.ok || !transactionsResponse.ok) {
-        console.error('❌ Erro nas respostas:', {
-          summary: summaryResponse.status,
-          transactions: transactionsResponse.status
-        });
+      if (!transactionsResponse.ok) {
+        console.error('❌ Erro ao buscar transações:', transactionsResponse.status);
         return;
       }
 
-      const [summaryData, transactionsData] = await Promise.all([
-        summaryResponse.json(),
-        transactionsResponse.json()
-      ]);
+      const transactionsData = await transactionsResponse.json();
+      console.log('✅ Transações recebidas:', {
+        count: transactionsData?.length || 0,
+        data: transactionsData
+      });
+
+      // CRÍTICO: Aguardar um pouco para garantir que o global foi atualizado no Netlify
+      // Isso ajuda quando containers são diferentes entre requisições
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      console.log('📊 Passo 2: Buscando summary...');
+      const summaryResponse = await fetch(
+        `/api/transactions/summary?month=${selectedMonth}&year=${selectedYear}&_t=${timestamp + 1}`, 
+        {
+          cache: 'no-store',
+          method: 'GET',
+          headers: cacheHeaders
+        }
+      );
+
+      if (!summaryResponse.ok) {
+        console.error('❌ Erro ao buscar summary:', summaryResponse.status);
+        // Se summary falhar, calcular manualmente das transações
+        console.log('⚠️ Calculando summary manualmente das transações...');
+        const manualSummary = calculateManualSummary(transactionsData);
+        setSummary(manualSummary);
+        setTransactions(Array.isArray(transactionsData) ? transactionsData : []);
+        setRefreshKey(prev => prev + 1);
+        return;
+      }
+
+      const summaryData = await summaryResponse.json();
 
       console.log('✅ Dados recebidos e atualizados:', { 
         summaryData, 
@@ -174,21 +232,27 @@ export default function DashboardPage() {
       const validatedSummary = {
         ...summaryData,
         totalIncome: typeof summaryData?.totalIncome === 'number' && !isNaN(summaryData.totalIncome) 
-          ? Math.max(0, summaryData.totalIncome) // Garantir que não é negativo
+          ? Math.max(0, summaryData.totalIncome)
           : 0,
         totalExpenses: typeof summaryData?.totalExpenses === 'number' && !isNaN(summaryData.totalExpenses)
-          ? Math.max(0, summaryData.totalExpenses) // Garantir que não é negativo
+          ? Math.max(0, summaryData.totalExpenses)
           : 0
       };
       
-      // Atualizar estado - isso vai forçar re-renderização dos gráficos
-      setSummary(validatedSummary);
+      // CRÍTICO: Se summary retornar zeros mas temos transações, calcular manualmente
+      if ((validatedSummary.totalIncome === 0 && validatedSummary.totalExpenses === 0) && 
+          Array.isArray(transactionsData) && transactionsData.length > 0) {
+        console.warn('⚠️ Summary retornou zeros mas temos transações, recalculando...');
+        const manualSummary = calculateManualSummary(transactionsData);
+        setSummary(manualSummary);
+      } else {
+        setSummary(validatedSummary);
+      }
+      
       setTransactions(Array.isArray(transactionsData) ? transactionsData : []);
       
-      // Forçar atualização dos gráficos incrementando a chave
+      // Forçar atualização dos gráficos
       setRefreshKey(prev => prev + 1);
-      
-      // Forçar atualização do estado para garantir que os gráficos sejam atualizados
       setHasUnsavedChanges(true);
       
       console.log('📊 Estado atualizado, gráficos devem ser re-renderizados');
@@ -196,6 +260,46 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('❌ Erro ao buscar dados:', error);
     }
+  };
+
+  // Função auxiliar para calcular summary manualmente quando a API falha
+  const calculateManualSummary = (transactions) => {
+    if (!Array.isArray(transactions) || transactions.length === 0) {
+      return {
+        totalIncome: 0,
+        totalExpenses: 0,
+        balance: 0,
+        incomeCategories: {},
+        expenseCategories: {}
+      };
+    }
+
+    let totalIncome = 0;
+    let totalExpenses = 0;
+    const incomeCategories = {};
+    const expenseCategories = {};
+
+    transactions.forEach(transaction => {
+      const type = String(transaction.type || '').toLowerCase().trim();
+      const amount = typeof transaction.amount === 'number' ? Math.abs(transaction.amount) : 0;
+      const category = String(transaction.category || 'Outros').trim();
+
+      if (type === 'income' && amount > 0) {
+        totalIncome += amount;
+        incomeCategories[category] = (incomeCategories[category] || 0) + amount;
+      } else if (type === 'expense' && amount > 0) {
+        totalExpenses += amount;
+        expenseCategories[category] = (expenseCategories[category] || 0) + amount;
+      }
+    });
+
+    return {
+      totalIncome: Math.max(0, totalIncome),
+      totalExpenses: Math.max(0, totalExpenses),
+      balance: totalIncome - totalExpenses,
+      incomeCategories,
+      expenseCategories
+    };
   };
 
   const handleTransactionAdded = () => {

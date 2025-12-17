@@ -25,11 +25,27 @@ export default async function handler(req, res) {
       const periodKey = `${userId}-${year}-${month}`;
       
       // Buscar transações específicas do período
-      const transactions = global.tempTransactionsByPeriod[periodKey] || [];
+      let transactions = global.tempTransactionsByPeriod[periodKey] || [];
+      
+      // CRÍTICO: No Netlify, global pode não persistir entre requisições
+      // Log detalhado para debug
+      console.log(`📊 Calculando resumo para período ${periodKey}:`, {
+        transactionsCount: transactions.length,
+        periodKeysAvailable: Object.keys(global.tempTransactionsByPeriod),
+        hasData: !!global.tempTransactionsByPeriod[periodKey],
+        transactions: transactions.map(t => ({ 
+          id: t._id, 
+          type: t.type, 
+          amount: t.amount, 
+          category: t.category 
+        }))
+      });
 
-      console.log(`Calculando resumo para período ${periodKey}:`, transactions.length, 'transações encontradas');
-      console.log('Períodos disponíveis:', Object.keys(global.tempTransactionsByPeriod));
-      console.log('Transações do período:', transactions);
+      // CRÍTICO: Se não encontrar transações, garantir que retornamos estrutura válida
+      if (!transactions || !Array.isArray(transactions)) {
+        console.warn(`⚠️ Transações não é array válido para ${periodKey}, usando array vazio`);
+        transactions = [];
+      }
 
       // Calcula totais
       const summary = {
@@ -112,12 +128,27 @@ export default async function handler(req, res) {
         variableExpenses: Number.isFinite(summary.variableExpenses) ? summary.variableExpenses : 0
       };
 
+      // CRÍTICO: Log detalhado para debug no Netlify
       console.log('✅ Resumo calculado:', {
+        periodKey,
         totalIncome: validatedSummary.totalIncome,
         totalExpenses: validatedSummary.totalExpenses,
         balance: validatedSummary.balance,
-        transactionsCount: transactions.length
+        transactionsCount: transactions.length,
+        transactionsProcessed: transactions.map(t => ({
+          id: t._id,
+          type: t.type,
+          amount: t.amount,
+          category: t.category
+        }))
       });
+
+      // CRÍTICO: Adicionar headers para evitar cache no Netlify
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
 
       return res.status(200).json(validatedSummary);
     } catch (error) {

@@ -1,14 +1,24 @@
 // API para atualizar e excluir transações específicas
+import { getAuth } from "@clerk/nextjs/server";
+
 export default async function handler(req, res) {
   try {
+    // Verificar autenticação com Clerk
+    const { userId } = getAuth(req);
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Não autorizado" });
+    }
+
     const { id } = req.query;
     if (!id) {
       return res.status(400).json({ error: "ID da transação é obrigatório" });
     }
 
-    // Inicializar estrutura global separada por período se não existir
+    // CRÍTICO: Sempre inicializar estrutura global no Netlify
     if (!global.tempTransactionsByPeriod) {
       global.tempTransactionsByPeriod = {};
+      console.log('🔧 Inicializando global.tempTransactionsByPeriod na API [id]');
     }
 
     // Encontrar transação e seu período atual
@@ -28,8 +38,19 @@ export default async function handler(req, res) {
 
     if (req.method === 'DELETE') {
       const deletedTransaction = global.tempTransactionsByPeriod[currentPeriod].splice(indexInPeriod, 1)[0];
-      console.log(`Transação excluída do período ${currentPeriod}:`, deletedTransaction);
-      return res.status(200).json({ message: 'Transação excluída com sucesso', deletedTransaction, periodKey: currentPeriod });
+      console.log(`🗑️ Transação excluída do período ${currentPeriod}:`, deletedTransaction);
+      
+      // CRÍTICO: Headers para evitar cache no Netlify
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      return res.status(200).json({ 
+        message: 'Transação excluída com sucesso', 
+        deletedTransaction, 
+        periodKey: currentPeriod,
+        remainingInPeriod: global.tempTransactionsByPeriod[currentPeriod].length
+      });
     }
 
     if (req.method === 'PUT') {
@@ -77,8 +98,10 @@ export default async function handler(req, res) {
         if (isNaN(newDate.getTime())) {
           return res.status(400).json({ error: 'Data inválida' });
         }
-        existing.date = newDate;
-        const newPeriod = `${newDate.getFullYear()}-${newDate.getMonth()}`;
+        existing.date = newDate.toISOString();
+        
+        // CRÍTICO: Construir newPeriod com userId (formato: userId-year-month)
+        const newPeriod = `${userId}-${newDate.getFullYear()}-${newDate.getMonth()}`;
         
         console.log('📅 Data atualizada:', { 
           oldPeriod: currentPeriod, 
@@ -110,6 +133,11 @@ export default async function handler(req, res) {
         type: existing.type,
         periodKey: currentPeriod 
       });
+
+      // CRÍTICO: Headers para evitar cache no Netlify
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
 
       return res.status(200).json({ 
         message: 'Transação atualizada com sucesso', 

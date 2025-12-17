@@ -16,6 +16,20 @@ const EXPENSE_SHADOW = 'rgba(239, 68, 68, 0.4)';       // Sombra vermelha
 export default function ExpensesPieChart({ data }) {
   // Normalizar e validar dados com useMemo para evitar recálculos desnecessários
   const normalizedData = useMemo(() => {
+    // CRÍTICO: Validação extra para garantir que data não é undefined/null
+    if (!data || (data.totalIncome === undefined && data.totalExpenses === undefined)) {
+      console.warn('⚠️ ExpensesPieChart: dados inválidos recebidos', data);
+      return {
+        totalIncome: 0,
+        totalExpenses: 0,
+        total: 0,
+        balance: 0,
+        hasData: false,
+        displayIncome: 0,
+        displayExpenses: 0
+      };
+    }
+
     const totalIncome = normalizeAmount(data?.totalIncome || 0);
     const totalExpenses = normalizeAmount(data?.totalExpenses || 0);
     

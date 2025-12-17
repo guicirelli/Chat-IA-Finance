@@ -9,9 +9,11 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: "Não autorizado" });
     }
 
-    // Inicializar estrutura global separada por mês/ano se não existir
+    // CRÍTICO: Sempre inicializar estrutura global no Netlify
+    // No serverless, cada requisição pode estar em um container diferente
     if (!global.tempTransactionsByPeriod) {
       global.tempTransactionsByPeriod = {};
+      console.log('🔧 Inicializando global.tempTransactionsByPeriod');
     }
 
     // Criar perfil temporário
@@ -31,6 +33,15 @@ export default async function handler(req, res) {
 
           const periodKey = `${userId}-${year}-${month}`;
           let transactions = global.tempTransactionsByPeriod[periodKey] || [];
+
+          // CRÍTICO: Garantir que transactions é um array válido
+          if (!Array.isArray(transactions)) {
+            console.warn(`⚠️ Transactions não é array para ${periodKey}, inicializando...`);
+            global.tempTransactionsByPeriod[periodKey] = [];
+            transactions = [];
+          }
+
+          console.log(`📊 GET /api/transactions - periodKey: ${periodKey}, encontrado: ${transactions.length} transações`);
 
           // Aplicar filtros
           if (type) {
@@ -57,7 +68,13 @@ export default async function handler(req, res) {
             .filter(t => t.type === 'expense')
             .reduce((sum, t) => sum + t.amount, 0);
 
-          console.log(`GET /api/transactions - periodKey: ${periodKey}, total encontrado: ${transactions.length}`);
+          // CRÍTICO: Headers para evitar cache no Netlify
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+          res.setHeader('X-Content-Type-Options', 'nosniff');
+
+          console.log(`✅ GET /api/transactions - retornando ${paginatedTransactions.length} de ${transactions.length} transações`);
           
           return res.status(200).json(paginatedTransactions);
         } catch (error) {
@@ -131,11 +148,22 @@ export default async function handler(req, res) {
 
           console.log('✅ Transação salva! Total no período:', global.tempTransactionsByPeriod[periodKey].length);
           console.log('📊 Todas as transações do período:', global.tempTransactionsByPeriod[periodKey]);
+          console.log('📍 Estado global após salvar:', {
+            periodKey,
+            totalTransactions: global.tempTransactionsByPeriod[periodKey].length,
+            allPeriodKeys: Object.keys(global.tempTransactionsByPeriod)
+          });
+
+          // CRÍTICO: Headers para evitar cache no Netlify
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
 
           return res.status(201).json({
             message: "Transação criada com sucesso",
             transaction: newTransaction,
-            periodKey: periodKey
+            periodKey: periodKey,
+            totalInPeriod: global.tempTransactionsByPeriod[periodKey].length
           });
         } catch (error) {
           console.error("Erro ao criar transação:", error);
